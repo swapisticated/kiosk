@@ -87,18 +87,6 @@ src/
    ```
    Server will start at `http://localhost:3000`.
 
-## API Usage
-
-### Create a Tenant
-
-```bash
-curl -X POST http://localhost:3000/tenants \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My Shop", "email": "owner@myshop.com", "domain": "myshop.com"}'
-```
-
-_(More documentation coming soon)_
-
 ## License
 
 MIT
