@@ -11,11 +11,16 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@hono/swagger-ui": "^0.5.3",
     "@hono/zod-validator": "^0.7.6",
     "@libsql/client": "^0.15.15",
+    "@mozilla/readability": "^0.6.0",
+    "axios": "^1.13.2",
+    "cheerio": "^1.1.2",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.11.3",
+    "linkedom": "^0.18.12",
     "nanoid": "^5.1.6",
     "zod": "^4.3.5"
   }

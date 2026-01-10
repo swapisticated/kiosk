@@ -44,13 +44,13 @@ try {
 
   return c.json({ tenant: results[0] }, 201);
 } catch (error) {
-  // Log only what's useful
-  const message = error instanceof Error ? error.message : String(error);
-  console.error('Tenant creation error:', message);
+      console.error('Tenant creation error :', error);
 
-  if ((error as any)?.cause?.code === 'SQLITE_CONSTRAINT') {
+        // Check if it's a duplicate email error
+  if ((error as any)?.cause?.code==='SQLITE_CONSTRAINT') {
     return c.json({ error: 'Email already exists' }, 409);
   }
+  // Any other error = server error
   return c.json({ error: 'Internal server error' }, 500);
 }
 });
