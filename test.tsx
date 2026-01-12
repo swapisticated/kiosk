@@ -1,22 +1,20 @@
+import { crawl } from "./src/services/crawler";
 import { writeFileSync } from "fs";
 
 async function main() {
-  const url = "https://www.crawlee.dev/";//https://crawlee.dev/
+  const results = await crawl("https://damndeepesh.dev/", 50);
+  console.log("\nResults:", results.length);
 
-  console.log(`Fetching from Jina: ${url}`);
-  const response = await fetch(`https://r.jina.ai/${url}`, {
-    headers: {
-      "X-Timeout": "60",
-      "X-Wait-For-Selector": "body",
-      "X-With-Shadow-Dom": "true",
-      "X-Engine": "browser",
-      "X-No-Cache": "true", // Bypass cache
-    },
-  });
-  const markdown = await response.text();
+  // Write JSON
+  writeFileSync("crawl-output.json", JSON.stringify(results, null, 2));
 
-  writeFileSync("jina-output.txt", markdown);
-  console.log(`Done! Written ${markdown.length} chars to jina-output.txt`);
+  // Write TXT (readable format)
+  const txtContent = results
+    .map((r) => `=== ${r.url} ===\n\n${r.content}\n`)
+    .join("\n---\n\n");
+  writeFileSync("crawl-output.txt", txtContent);
+
+  console.log("Written to crawl-output.json and crawl-output.txt");
 }
 
 main();
