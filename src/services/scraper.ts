@@ -116,7 +116,7 @@ function segmentByHeadings(html: string): Section[] {
     const $el = $(el);
     const tagName = (el.tagName || el.name || "").toLowerCase();
     const text = $el.text().trim();
-
+w
     if (!text) return; // Skip empty elements
 
     // If it's a heading, start a new section
