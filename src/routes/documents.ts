@@ -13,7 +13,7 @@ import { eq, and } from "drizzle-orm";
 
 const documentsRoute = new Hono();
 
-//document shape?
+//document shape ?
 const createdocumentSchema = z.object({
   url: z.url("Must be a valid url"),
   title: z.string().optional(),

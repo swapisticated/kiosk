@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors"; 
 import tenantsRoute from "./routes/tenants";
 import documentsRoute from "./routes/documents"; 
+import chatRoute from "./routes/chat";
 
 const app  = new Hono();
 
@@ -13,4 +14,5 @@ app.get('/', (c)=>{
 
 app.route('/tenants',tenantsRoute)
 app.route('/documents', documentsRoute);
+app.route('/chat', chatRoute)
 export default app;

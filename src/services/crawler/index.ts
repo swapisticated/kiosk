@@ -1,9 +1,11 @@
 import { extractContent } from "./contentExtractor";
 import { crawlWithCheerio } from "./cheerioCrawl";
+import { chunkContent, type Chunk } from "./chunking";
 
 interface CrawlResult {
   url: string;
   content: string;
+  chunks: Chunk[];
 }
 
 const MIN_CONTENT_LENGTH = 10;
@@ -32,7 +34,12 @@ export async function crawl(
       continue;
     }
 
-    results.push({ url, content });
+    // Extract title from markdown (Jina format: "Title: ...")
+    const titleMatch = content.match(/^Title:\s*(.+)$/m);
+    const title = titleMatch?.[1] ?? "Untitled";
+
+    const chunks = await chunkContent(content, url, title);
+    results.push({ url, content, chunks });
     console.log(`[Crawler] ${url} (${content.length} chars)`);
   }
 
