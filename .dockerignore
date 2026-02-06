@@ -1,0 +1,11 @@
+node_modules
+.git
+.env
+.env.local
+dashboard/.next
+dashboard/node_modules
+dist
+storage
+drizzle
+*.db
+*.db-journal

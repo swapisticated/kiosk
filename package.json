@@ -3,6 +3,12 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build:widget": "bun run scripts/build-widget.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/jsdom": "^27.0.0",

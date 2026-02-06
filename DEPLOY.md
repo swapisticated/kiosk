@@ -66,6 +66,20 @@ The dashboard is a Next.js app used to manage chatbots.
    - `NEXTAUTH_URL`: `https://YOUR_DASHBOARD_URL.vercel.app` (or `http://localhost:3000` for local dev).
 6. Click **Deploy**.
 
+### Google OAuth Configuration (Important)
+
+For logging in to the dashboard, you need to update your Google Cloud Console credentials with your production URL.
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. Select your OAuth 2.0 Client credential.
+3. Add your Vercel URL to **Authorized JavaScript origins**:
+   - `https://YOUR_DASHBOARD_URL.vercel.app`
+4. Add the callback URL to **Authorized redirect URIs**:
+   - `https://YOUR_DASHBOARD_URL.vercel.app/api/auth/callback/google`
+5. Updated Vercel Environment Variables:
+   - `GOOGLE_CLIENT_ID`: Your Google client ID.
+   - `GOOGLE_CLIENT_SECRET`: Your Google client secret.
+
 ---
 
 ## 4. Embedding the Widget
