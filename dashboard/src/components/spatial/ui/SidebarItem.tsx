@@ -27,7 +27,7 @@ export function SidebarItem({
         className
       )}
     >
-      <Icon size={20} className={active ? "text-accent-blue" : undefined} />
+      <Icon size={20} className={active ? "text-white" : undefined} />
       <span className="text-sm font-medium">{label}</span>
     </button>
   );

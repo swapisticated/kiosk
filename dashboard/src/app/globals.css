@@ -78,6 +78,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
 }
 
 
@@ -94,21 +95,20 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 48px;
-  min-height: 100vh;
+  height: 100vh;
+  width: full;
+  overflow: hidden;
+  padding: 0;
 }
 
 .curved-dashboard {
-  width: 100%;
-  max-width: 1700px;
-  height: 90vh;
+  width: 92vw;
+  max-width: 1600px;
+  /* Adjust height to fit comfortably with padding/margins if needed, or just fill reasonably */
+  height: 85vh; 
 
   display: flex;
   gap: 16px;
-
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(40px) brightness(1.2) saturate(1.2);
-  -webkit-backdrop-filter: blur(40px) brightness(1.2) saturate(1.2);
   border-radius: 42px;
 
   transform:
@@ -123,6 +123,14 @@ body {
   position: relative;
   /* Ensure children don't break the illusion */
   /* transform-style: preserve-3d; */
+}
+
+.glass{
+  
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(40px) brightness(1.2) saturate(1.2);
+  -webkit-backdrop-filter: blur(40px) brightness(1.2) saturate(1.2);
+
 }
 
 /* ============================================
@@ -146,8 +154,10 @@ body {
 }
 
 .sidebar-item-active {
-  background: rgba(79, 140, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
+  /* border: 1px solid rgba(255, 255, 255, 0.1); */
   color: #fff;
+  /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); */
 }
 
 /* ============================================
@@ -171,20 +181,26 @@ body {
    ============================================ */
 
 .btn-primary {
-  background: linear-gradient(135deg, #4f8cff 0%, #3dd6c6 100%);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
-  font-weight: 600;
-  padding: 12px 24px;
+  font-weight: 500;
+  padding: 10px 20px;
   border-radius: 12px;
-  border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(79, 140, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(79, 140, 255, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-secondary {

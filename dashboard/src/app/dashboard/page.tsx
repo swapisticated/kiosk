@@ -12,6 +12,7 @@ import { RightPanel } from "@/components/spatial/RightPanel";
 import { ActivityWidget } from "@/components/spatial/ActivityWidget";
 import { FeatureCard } from "@/components/spatial/ui/FeatureCard";
 import { ListRow } from "@/components/spatial/ui/ListRow";
+import { TiltPanel } from "@/components/spatial/TiltPanel";
 
 // Icons
 import {
@@ -42,13 +43,13 @@ const FEATURE_CARDS = [
   { id: "pipelines", icon: GitBranch, title: "Pipelines" },
   { id: "media", icon: Image, title: "Media" },
   { id: "insights", icon: Lightbulb, title: "Insights" },
-  { id: "templates", icon: Layers, title: "Templates" },
+  { id: "training", icon: Video, title: "Training" },
+  // { id: "templates", icon: Layers, title: "Templates" },
 ];
 
-const FEATURE_CARDS_ROW2 = [
-  { id: "workflows", icon: Workflow, title: "Workflows" },
-  { id: "training", icon: Video, title: "Training" },
-];
+// const FEATURE_CARDS_ROW2 = [
+//   { id: "workflows", icon: Workflow, title: "Workflows" },
+// ];
 
 interface ProgressEvent {
   step: string;
@@ -347,27 +348,25 @@ export default function DashboardPage() {
   return (
     <div className="relative min-h-screen overflow-hidden text-stone-200 font-sans selection:bg-cyan-500/30">
       <BackgroundLayer />
-
-      
+      <BrowserBar
+        className="glass"
+        url={`kiosk.app/dashboard/${activeFeature}`}
+      />
 
       <div className="scene">
         <div className="curved-dashboard">
-       
-
           {/* LEFT PANEL: Sidebar */}
-          <div className="h-full w-[260px] rounded-[28px] bg-black/25 backdrop-blur-2xl border border-white/10 flex flex-col overflow-hidden">
+          <TiltPanel className="h-full w-[280px] rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden">
             <SpatialSidebar
               activeItem={activeNav}
               onItemClick={setActiveNav}
               workspaceName="Kiosk"
               className="h-full w-full p-4"
             />
-          </div>
+          </TiltPanel>
 
           {/* CENTER PANEL: Main Content */}
-          <div className="h-full flex-1 rounded-[28px] bg-black/25 backdrop-blur-2xl border border-white/10 flex flex-col overflow-hidden relative group">
-            <BrowserBar url={`kiosk.app/dashboard/${activeFeature}`} />
-
+          <TiltPanel className="h-full flex-1 rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden relative group">
             <main className="flex-1 flex flex-col p-8 overflow-hidden pt-20">
               {/* Feature Cards Grid - Row 1 */}
               <div className="grid grid-cols-6 gap-3 mb-3">
@@ -383,7 +382,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Feature Cards Grid - Row 2 */}
-              <div className="grid grid-cols-6 gap-3 mb-6">
+              {/* <div className="grid grid-cols-6 gap-3 mb-6">
                 {FEATURE_CARDS_ROW2.map((card) => (
                   <FeatureCard
                     key={card.id}
@@ -393,7 +392,7 @@ export default function DashboardPage() {
                     onClick={() => handleFeatureClick(card.id)}
                   />
                 ))}
-              </div>
+              </div> */}
 
               {/* Projects (Documents) Section */}
               <div className="flex-1 flex flex-col min-h-0">
@@ -438,25 +437,31 @@ export default function DashboardPage() {
                 </div>
               </div>
             </main>
-          </div>
+          </TiltPanel>
 
           {/* RIGHT PANEL: Stats & Activity */}
-          <div className="h-full w-[300px] rounded-[28px] bg-black/25 backdrop-blur-2xl border border-white/10 flex flex-col overflow-hidden p-4 gap-4">
-            <div className="flex-1">
-              <RightPanel
-                usedAmount={stats.totalChats}
-                totalAmount={100} // Target?
-                unit=" chats"
-                className="p-0 border-none w-full"
-              />
-            </div>
+          <div className="h-full w-[280px] flex flex-col gap-4">
+            {/* Top Section: 3/4 */}
+            <TiltPanel className="flex-[2] w-full rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden p-4">
+              <div className="flex-1 flex flex-col">
+                <RightPanel
+                  usedAmount={stats.totalChats}
+                  totalAmount={100} // Target?
+                  unit=" chats"
+                  className="p-0 border-none w-full flex-1"
+                />
+              </div>
+            </TiltPanel>
 
-            <div className="h-auto">
-              <ActivityWidget
-                items={activityItems}
-                className="relative inset-auto right-auto bottom-auto w-full"
-              />
-            </div>
+            {/* Bottom Section: 1/4 */}
+            <TiltPanel className="flex-[1] w-full rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden p-4">
+              <div className="flex-1 flex flex-col relative">
+                <ActivityWidget
+                  items={activityItems}
+                  className="relative inset-auto right-auto bottom-auto w-full h-full"
+                />
+              </div>
+            </TiltPanel>
           </div>
         </div>
       </div>

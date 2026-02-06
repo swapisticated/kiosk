@@ -26,8 +26,8 @@ export function FeatureCard({
         "bg-[rgba(255,255,255,0.04)] border border-white/[0.06]",
         "hover:bg-[rgba(255,255,255,0.08)] hover:border-white/[0.1]",
         active && [
-          "bg-[rgba(79,140,255,0.12)] border-[rgba(79,140,255,0.4)]",
-          "shadow-[0_0_24px_rgba(79,140,255,0.3)]",
+          "bg-white/[0.08] border-white/20",
+          "shadow-[0_0_24px_rgba(255,255,255,0.05)]",
         ],
         className
       )}
@@ -36,12 +36,12 @@ export function FeatureCard({
         className={cn(
           "w-12 h-12 rounded-xl flex items-center justify-center",
           "bg-[rgba(255,255,255,0.06)]",
-          active && "bg-[rgba(79,140,255,0.2)]"
+          active && "bg-white/[0.12]"
         )}
       >
         <Icon
           size={24}
-          className={cn("text-white/60", active && "text-accent-blue")}
+          className={cn("text-white/60", active && "text-white")}
         />
       </div>
       <span

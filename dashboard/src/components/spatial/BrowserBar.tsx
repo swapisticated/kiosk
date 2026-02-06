@@ -10,6 +10,8 @@ import {
   Lock,
 } from "lucide-react";
 
+import { TiltPanel } from "./TiltPanel";
+
 interface BrowserBarProps {
   url?: string;
   className?: string;
@@ -20,13 +22,13 @@ export function BrowserBar({
   className,
 }: BrowserBarProps) {
   return (
-    <div
-      className={cn(
-        "absolute top-0 left-1/2 -translate-x-1/2 z-50",
+    <TiltPanel
+      className={cn( 
+        "absolute  left-1/2 -translate-x-1/2 z-50",
         "flex items-center gap-3 px-4 py-2",
-        "bg-[rgba(30,30,35,0.85)] backdrop-blur-xl",
-        "border border-white/[0.08] rounded-b-2xl",
-        "shadow-[0_4px_24px_rgba(0,0,0,0.4)]",
+        "bg-[#0a0a0c]/10 backdrop-blur-2xl",
+        "border border-white/10 rounded-full",
+        "shadow-2xl shadow-black/50",
         className
       )}
     >
@@ -44,7 +46,7 @@ export function BrowserBar({
       </div>
 
       {/* URL field */}
-      <div className="flex items-center gap-2 px-4 py-1.5 bg-[rgba(0,0,0,0.3)] rounded-lg min-w-[280px]">
+      <div className="flex items-center gap-2 bg-white/7 px-4 py-1.5 rounded-lg min-w-[280px]">
         <Lock size={12} className="text-emerald-400" />
         <span className="text-sm text-white/60 font-medium tracking-wide">
           {url}
@@ -60,6 +62,6 @@ export function BrowserBar({
           <Maximize2 size={14} />
         </button>
       </div>
-    </div>
+    </TiltPanel>
   );
 }
