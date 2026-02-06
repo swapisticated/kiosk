@@ -10,9 +10,24 @@ type Variables = {
 
 export const authMiddleware = createMiddleware<{ Variables: Variables }>(
   async (c, next) => {
-    // 1. Get the Authorization header
+    // 1. Check for Dashboard Secret Bypass (for Dashboard UI)
+    const dashboardSecret = c.req.header("x-dashboard-secret");
+    const tenantIdHeader = c.req.header("x-tenant-id");
+
+    if (
+      dashboardSecret &&
+      process.env.DASHBOARD_SECRET &&
+      dashboardSecret === process.env.DASHBOARD_SECRET &&
+      tenantIdHeader
+    ) {
+      c.set("tenantId", tenantIdHeader);
+      await next();
+      return;
+    }
+
+    // 2. Get the Authorization header
     const authHeader = c.req.header("Authorization");
-    
+
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return c.json({ error: "Missing or invalid Authorization header" }, 401);
     }

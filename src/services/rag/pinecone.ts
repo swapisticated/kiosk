@@ -43,3 +43,16 @@ export async function deleteNamespace(namespace: string): Promise<void> {
   await index.namespace(namespace).deleteAll();
   console.log(`[Pinecone] Deleted all vectors in namespace: ${namespace}`);
 }
+
+// Delete specific vectors by ID
+export async function deleteVectors(
+  namespace: string,
+  ids: string[]
+): Promise<void> {
+  if (ids.length === 0) return;
+  const index = pc.index(INDEX_NAME);
+  await index.namespace(namespace).deleteMany(ids);
+  console.log(
+    `[Pinecone] Deleted ${ids.length} vectors from namespace: ${namespace}`
+  );
+}

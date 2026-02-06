@@ -1,0 +1,225 @@
+@import "tailwindcss";
+
+/* ============================================
+   GLASSMORPHISM DESIGN SYSTEM
+   Curved Glass Viewport Dashboard
+   ============================================ */
+
+:root {
+  /* Glass Colors */
+  --glass: rgba(255, 255, 255, 0.08);
+  --glass-light: rgba(255, 255, 255, 0.12);
+  --glass-dark: rgba(0, 0, 0, 0.35);
+  
+  /* Accent Colors */
+  --accent-blue: #4f8cff;
+  --accent-teal: #3dd6c6;
+  
+  /* Spatial Theme */
+  --background: #0a0a0c;
+  --foreground: #eaeaec;
+  
+  /* Glass Cards */
+  --card: rgba(255, 255, 255, 0.05);
+  --card-foreground: #ffffff;
+  
+  --primary: #4f8cff;
+  --primary-foreground: #ffffff;
+  
+  --muted: rgba(255, 255, 255, 0.05);
+  --muted-foreground: #a1a1aa;
+  
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(0, 0, 0, 0.4);
+  --ring: rgba(255, 255, 255, 0.1);
+
+  /* Specs */
+  --radius: 20px;
+  --radius-xl: 24px;
+  
+  /* Shadows */
+  --shadow-glass: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
+  --shadow-glow: 0 0 0 1px rgba(79,140,255,0.6), 0 0 24px rgba(79,140,255,0.35);
+  --shadow-soft: 0 12px 24px rgba(0,0,0,0.35);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  /* Glass tokens */
+  --color-glass: var(--glass);
+  --color-glass-light: var(--glass-light);
+  --color-glass-dark: var(--glass-dark);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-teal: var(--accent-teal);
+  
+  --radius-glass: var(--radius);
+  --radius-xl: var(--radius-xl);
+  
+  --shadow-glass: var(--shadow-glass);
+  --shadow-glow: var(--shadow-glow);
+  --shadow-soft: var(--shadow-soft);
+  
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+
+
+
+
+/* ============================================
+   CINEMATIC CURVATURE
+   Single-element scale/perspective illusion
+   ============================================ */
+
+.scene {
+  /* perspective: 2000px; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 48px;
+  min-height: 100vh;
+}
+
+.curved-dashboard {
+  width: 100%;
+  max-width: 1700px;
+  height: 90vh;
+
+  display: flex;
+  gap: 16px;
+
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(40px) brightness(1.2) saturate(1.2);
+  -webkit-backdrop-filter: blur(40px) brightness(1.2) saturate(1.2);
+  border-radius: 42px;
+
+  transform:
+    scaleX(1.04)
+    scaleY(0.96)
+    rotateX(0.6deg);
+
+  /* box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08); */
+
+  position: relative;
+  /* Ensure children don't break the illusion */
+  /* transform-style: preserve-3d; */
+}
+
+/* ============================================
+   SIDEBAR STYLES
+   ============================================ */
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar-item-active {
+  background: rgba(79, 140, 255, 0.15);
+  color: #fff;
+}
+
+/* ============================================
+   LIST ROW STYLES
+   ============================================ */
+
+.list-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 12px;
+  transition: all 0.15s ease;
+}
+
+.list-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ============================================
+   BUTTON STYLES
+   ============================================ */
+
+.btn-primary {
+  background: linear-gradient(135deg, #4f8cff 0%, #3dd6c6 100%);
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(79, 140, 255, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(79, 140, 255, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(79, 140, 255, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(79, 140, 255, 0.5); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

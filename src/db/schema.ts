@@ -2,13 +2,37 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 
 // ===================
+// USERS (OAuth accounts from NextAuth)
+// ===================
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  email: text("email").notNull().unique(),
+  emailVerified: integer("email_verified", { mode: "timestamp" }),
+  image: text("image"),
+  provider: text("provider"), // "google", "github", etc.
+  providerAccountId: text("provider_account_id"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
+    () => new Date()
+  ),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(
+    () => new Date()
+  ),
+});
+
+// ===================  
 // TENANTS
 // ===================
 export const tenants = sqliteTable("tenants", {
   id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  domain: text("domain"),
+  email: text("email").notNull(),
+  allowedOrigins: text("allowed_origins", { mode: "json" })
+    .$type<string[]>()
+    .default([]),
   widgetConfig: text("widget_config", { mode: "json" }).$type<{
     botName?: string;
     welcomeMessage?: string;
@@ -140,7 +164,15 @@ export const messages = sqliteTable("messages", {
 // ===================
 // RELATIONS (for Drizzle query API)
 // ===================
-export const tenantsRelations = relations(tenants, ({ many }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
+  tenants: many(tenants),
+}));
+
+export const tenantsRelations = relations(tenants, ({ one, many }) => ({
+  user: one(users, {
+    fields: [tenants.userId],
+    references: [users.id],
+  }),
   apiKeys: many(apiKeys),
   documents: many(documents),
   conversations: many(conversations),
