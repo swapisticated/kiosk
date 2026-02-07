@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { BackgroundLayer } from "@/components/spatial/BackgroundLayer";
 
 type Step = "website" | "processing" | "complete";
 
@@ -272,182 +273,249 @@ export default function OnboardingPage() {
   // Show loading while checking auth
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+        <BackgroundLayer />
+        <div className="w-12 h-12 relative">
+          <div className="absolute inset-0 bg-white/20 rounded-full animate-ping opacity-20" />
+          <div className="relative w-full h-full rounded-full border-2 border-white/10 border-t-white animate-spin" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="relative min-h-screen overflow-hidden flex items-center justify-center">
+      <BackgroundLayer />
+
+      <div className="w-full max-w-lg relative z-10 px-4">
         {/* Progress dots */}
-        <div className="flex justify-center gap-2 mb-8">
+        <div className="flex justify-center gap-3 mb-12">
           {["website", "processing", "complete"].map((s, i) => (
             <div
               key={s}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              className={`h-1.5 rounded-full transition-all duration-500 ${
                 step === s
-                  ? "bg-primary w-6"
+                  ? "w-8 bg-white shadow-[0_0_12px_rgba(255,255,255,0.5)]"
                   : i < ["website", "processing", "complete"].indexOf(step)
-                  ? "bg-primary/60"
-                  : "bg-slate-300 dark:bg-slate-600"
+                  ? "w-2 bg-white/40"
+                  : "w-2 bg-white/10"
               }`}
             />
           ))}
         </div>
 
         {/* Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl p-8 relative overflow-hidden">
-          {/* Welcome message with user info */}
-          {session?.user && step === "website" && (
-            <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-200 dark:border-slate-700">
-              {session.user.image && (
-                <img
-                  src={session.user.image}
-                  alt=""
-                  className="w-10 h-10 rounded-full"
-                />
-              )}
-              <div>
-                <p className="font-medium">{session.user.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {session.user.email}
+        <div className="relative group">
+          {/* Glow effect behind card */}
+          <div className="absolute -inset-1 bg-gradient-to-br from-white/10 to-transparent rounded-[40px] blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-1000" />
+
+          <div className="relative rounded-[32px] bg-black/40 backdrop-blur-3xl border border-white/10 p-8 md:p-12 shadow-2xl overflow-hidden">
+            {/* Inner highlight */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+
+            {/* Welcome message with user info - Re-styled */}
+            {session?.user && step === "website" && (
+              <div className="relative flex items-center gap-4 mb-8 pb-8 border-b border-white/10">
+                {session.user.image ? (
+                  <div className="relative">
+                    <div className="absolute -inset-1 rounded-full bg-white/20 blur-md" />
+                    <img
+                      src={session.user.image}
+                      alt=""
+                      className="relative w-12 h-12 rounded-full border border-white/20"
+                    />
+                  </div>
+                ) : (
+                  <div className="relative w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                    <span className="text-lg font-medium text-white">
+                      {session.user.name?.[0] || "U"}
+                    </span>
+                  </div>
+                )}
+                <div>
+                  <p className="text-lg font-medium text-white tracking-wide">
+                    {session.user.name}
+                  </p>
+                  <p className="text-sm text-white/40 font-light">
+                    {session.user.email}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 1: Website Setup */}
+            <div
+              className={`transition-all duration-500 ${
+                step === "website"
+                  ? "opacity-100 translate-x-0 relative z-10"
+                  : "opacity-0 absolute inset-0 translate-x-[-100%] pointer-events-none"
+              }`}
+            >
+              <h1 className="text-3xl font-light text-white mb-3">
+                Configure <span className="font-semibold">Agent</span>
+              </h1>
+              <p className="text-white/50 font-light mb-8 text-lg">
+                Connect your knowledge base source
+              </p>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-xs uppercase tracking-wider text-white/40 font-medium ml-1">
+                    Website URL
+                  </label>
+                  <div className="relative group/input">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-white/20 to-white/5 rounded-2xl opacity-0 group-hover/input:opacity-100 transition-opacity blur" />
+                    <input
+                      type="url"
+                      value={formData.websiteUrl}
+                      onChange={(e) =>
+                        updateField("websiteUrl", e.target.value)
+                      }
+                      placeholder="https://yourcompany.com"
+                      className="relative w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:bg-white/5 focus:border-white/20 transition-all font-light"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs uppercase tracking-wider text-white/40 font-medium ml-1">
+                    Agent Name{" "}
+                    <span className="text-white/20 normal-case tracking-normal ml-1">
+                      (Optional)
+                    </span>
+                  </label>
+                  <div className="relative group/input">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-white/20 to-white/5 rounded-2xl opacity-0 group-hover/input:opacity-100 transition-opacity blur" />
+                    <input
+                      type="text"
+                      value={formData.botName}
+                      onChange={(e) => updateField("botName", e.target.value)}
+                      placeholder="e.g., Support Assistant"
+                      className="relative w-full px-5 py-4 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:bg-white/5 focus:border-white/20 transition-all font-light"
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleCreateBot}
+                  className="w-full py-4 px-6 mt-4 rounded-xl font-medium transition-all relative overflow-hidden group/btn"
+                >
+                  <div className="absolute inset-0 bg-white/10 group-hover/btn:bg-white/20 transition-colors" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/btn:animate-shimmer" />
+                  <span className="relative text-white flex items-center justify-center gap-2">
+                    Initialize Agent
+                    <svg
+                      className="w-4 h-4 transition-transform group-hover/btn:translate-x-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"
+                      />
+                    </svg>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Step 2: Processing */}
+            <div
+              className={`transition-all duration-500 ${
+                step === "processing"
+                  ? "opacity-100 translate-x-0 relative z-10"
+                  : "opacity-0 absolute inset-0 translate-x-[100%] pointer-events-none"
+              }`}
+            >
+              <div className="text-center py-8">
+                <div className="w-20 h-20 mx-auto mb-8 relative">
+                  <div className="absolute inset-0 bg-white/20 rounded-full animate-ping opacity-20" />
+                  <div className="relative w-full h-full rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-sm">
+                    <svg
+                      className="w-8 h-8 text-white animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                      <path
+                        className="opacity-100"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <h1 className="text-2xl font-light text-white mb-2">
+                  System Initialization
+                </h1>
+                <p className="text-white/50 text-lg font-light mb-8 animate-pulse">
+                  {progressMessage}
+                </p>
+
+                {/* Progress bar */}
+                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden backdrop-blur-sm">
+                  <div
+                    className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all duration-500 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <div className="flex justify-between mt-2 text-xs font-mono text-white/30">
+                  <span>PROCESSING</span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3: Complete */}
+            <div
+              className={`transition-all duration-500 ${
+                step === "complete"
+                  ? "opacity-100 translate-x-0 relative z-10"
+                  : "opacity-0 absolute inset-0 translate-x-[100%] pointer-events-none"
+              }`}
+            >
+              <div className="text-center py-8">
+                <div className="w-20 h-20 mx-auto mb-8 relative">
+                  <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping opacity-20" />
+                  <div className="relative w-full h-full rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                    <svg
+                      className="w-8 h-8 text-green-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <h1 className="text-3xl font-light text-white mb-2">Ready</h1>
+                <p className="text-white/50 text-lg font-light mb-4">
+                  Entering Dashboard environment...
                 </p>
               </div>
-            </div>
-          )}
-
-          {/* Step 1: Website Setup */}
-          <div
-            className={`transition-all duration-500 ${
-              step === "website"
-                ? "opacity-100 translate-x-0"
-                : "opacity-0 absolute inset-0 translate-x-[-100%] pointer-events-none"
-            }`}
-          >
-            <h1 className="text-2xl font-bold mb-2">Set up your chatbot</h1>
-            <p className="text-muted-foreground mb-6">
-              We'll train your AI on your website content
-            </p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Website URL
-                </label>
-                <input
-                  type="url"
-                  value={formData.websiteUrl}
-                  onChange={(e) => updateField("websiteUrl", e.target.value)}
-                  placeholder="https://yourcompany.com"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Bot name{" "}
-                  <span className="text-muted-foreground">(optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.botName}
-                  onChange={(e) => updateField("botName", e.target.value)}
-                  placeholder="e.g., Support Bot"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                />
-              </div>
-
-              {error && <p className="text-red-500 text-sm">{error}</p>}
-
-              <button
-                onClick={handleCreateBot}
-                className="w-full py-3 px-6 bg-primary text-primary-foreground rounded-xl font-medium hover:opacity-90 transition-opacity mt-4"
-              >
-                Create Chatbot →
-              </button>
-            </div>
-          </div>
-
-          {/* Step 2: Processing */}
-          <div
-            className={`transition-all duration-500 ${
-              step === "processing"
-                ? "opacity-100 translate-x-0"
-                : "opacity-0 absolute inset-0 translate-x-[100%] pointer-events-none"
-            }`}
-          >
-            <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-                <svg
-                  className="w-8 h-8 text-primary animate-spin"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              </div>
-
-              <h1 className="text-2xl font-bold mb-2">
-                Setting up your chatbot
-              </h1>
-              <p className="text-muted-foreground mb-6">{progressMessage}</p>
-
-              {/* Progress bar */}
-              <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary transition-all duration-500 ease-out"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {progress}% complete
-              </p>
-            </div>
-          </div>
-
-          {/* Step 3: Complete */}
-          <div
-            className={`transition-all duration-500 ${
-              step === "complete"
-                ? "opacity-100 translate-x-0"
-                : "opacity-0 absolute inset-0 translate-x-[100%] pointer-events-none"
-            }`}
-          >
-            <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <svg
-                  className="w-8 h-8 text-green-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-
-              <h1 className="text-2xl font-bold mb-2">You're all set! 🎉</h1>
-              <p className="text-muted-foreground mb-4">
-                Redirecting you to your dashboard...
-              </p>
             </div>
           </div>
         </div>
