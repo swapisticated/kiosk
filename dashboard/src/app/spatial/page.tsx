@@ -5,6 +5,7 @@ import { BackgroundLayer } from "@/components/spatial/BackgroundLayer";
 import { BrowserBar } from "@/components/spatial/BrowserBar";
 import { SpatialSidebar } from "@/components/spatial/SpatialSidebar";
 import { RightPanel } from "@/components/spatial/RightPanel";
+import { UsageStats } from "@/components/spatial/views/UsageStats";
 import { ActivityWidget } from "@/components/spatial/ActivityWidget";
 import { FeatureCard } from "@/components/spatial/ui/FeatureCard";
 import { ListRow } from "@/components/spatial/ui/ListRow";
@@ -91,8 +92,6 @@ export default function SpatialDashboard() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <BackgroundLayer />
-
-   
 
       <div className="scene">
         <div className="curved-dashboard">
@@ -184,12 +183,7 @@ export default function SpatialDashboard() {
           {/* RIGHT PANEL: Stats & Activity */}
           <div className="h-full w-[300px] rounded-[28px] bg-black/25 backdrop-blur-2xl border border-white/10 flex flex-col overflow-hidden p-4 gap-4">
             <div className="flex-1">
-              <RightPanel
-                usedAmount={42}
-                totalAmount={100}
-                unit="GB"
-                className="p-0 border-none w-full"
-              />
+              <UsageStats usedAmount={42} totalAmount={100} unit="GB" />
             </div>
 
             <div className="h-auto">
