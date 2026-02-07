@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Spatial Components
 import { BackgroundLayer } from "@/components/spatial/BackgroundLayer";
@@ -11,50 +12,52 @@ import { SpatialSidebar } from "@/components/spatial/SpatialSidebar";
 import { RightPanel } from "@/components/spatial/RightPanel";
 import { ActivityWidget } from "@/components/spatial/ActivityWidget";
 import { FeatureCard } from "@/components/spatial/ui/FeatureCard";
-import { ListRow } from "@/components/spatial/ui/ListRow";
 import { TiltPanel } from "@/components/spatial/TiltPanel";
+
+// Views
+import { KnowledgeGrid } from "@/components/spatial/views/KnowledgeGrid";
+import { StudioEditor } from "@/components/spatial/views/StudioEditor";
+import { IntegrationView } from "@/components/spatial/views/IntegrationView";
+import { UsageStats } from "@/components/spatial/views/UsageStats";
+import { LivePreview } from "@/components/spatial/views/LivePreview";
+
+import { InsightsView } from "@/components/spatial/views/InsightsView";
+import { MediaView } from "@/components/spatial/views/MediaView";
 
 // Icons
 import {
   FileText,
   Image,
   Lightbulb,
-  Layers,
   Video,
   Bot,
   GitBranch,
-  Workflow,
-  Globe,
-  Filter,
-  Share2,
-  Plus,
 } from "lucide-react";
 
 // Modals
 import { ManageSourcesModal } from "@/components/ManageSourcesModal";
-import { CustomizationModal } from "@/components/CustomizationModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-// Feature cards data
 const FEATURE_CARDS = [
-  { id: "agents", icon: Bot, title: "Agents" }, // Maps to Customization
-  { id: "documents", icon: FileText, title: "Documents" }, // Maps to KnowledgeBase
-  { id: "pipelines", icon: GitBranch, title: "Pipelines" },
+  { id: "documents", icon: FileText, title: "Knowledge" },
+  { id: "agents", icon: Bot, title: "Studio" },
+  { id: "pipelines", icon: GitBranch, title: "Connect" },
   { id: "media", icon: Image, title: "Media" },
   { id: "insights", icon: Lightbulb, title: "Insights" },
-  { id: "training", icon: Video, title: "Training" },
-  // { id: "templates", icon: Layers, title: "Templates" },
 ];
-
-// const FEATURE_CARDS_ROW2 = [
-//   { id: "workflows", icon: Workflow, title: "Workflows" },
-// ];
 
 interface ProgressEvent {
   step: string;
   progress: number;
   message: string;
+}
+
+interface Stats {
+  totalChats: number;
+  totalMessages: number;
+  recentChats: any[];
+  activity: any[];
 }
 
 export default function DashboardPage() {
@@ -70,13 +73,13 @@ export default function DashboardPage() {
   >("idle");
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState("");
-  const [stats, setStats] = useState({ totalChats: 0, totalMessages: 0 });
+  const [stats, setStats] = useState<Stats | null>(null);
 
   // UI State
   const [activeNav, setActiveNav] = useState("files");
   const [activeFeature, setActiveFeature] = useState("documents");
   const [isManageSourcesOpen, setIsManageSourcesOpen] = useState(false);
-  const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
 
   // Customization State
   const [widgetConfig, setWidgetConfig] = useState<any>({});
@@ -152,10 +155,21 @@ export default function DashboardPage() {
 
       // Fetch Stats
       try {
+        console.log("Fetching stats from:", `${API_URL}/stats`);
         const statsRes = await fetch(`${API_URL}/stats`, { headers });
-        const statsData = await statsRes.json();
-        if (!statsData.error) {
-          setStats(statsData);
+
+        if (!statsRes.ok) {
+          console.error(
+            "Stats Fetch Error:",
+            statsRes.status,
+            await statsRes.text()
+          );
+        } else {
+          const statsData = await statsRes.json();
+          console.log("Stats Received:", statsData);
+          if (!statsData.error) {
+            setStats(statsData);
+          }
         }
       } catch (e) {
         console.error("Failed to fetch stats:", e);
@@ -280,49 +294,28 @@ export default function DashboardPage() {
     }
   };
 
-  const handleSaveConfig = async (newConfig: any) => {
+  const handleUpdateConfig = (key: string, value: any) => {
+    setWidgetConfig((prev: any) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveConfig = async () => {
     if (!tenantId) return;
+    setSavingConfig(true);
     try {
-      setWidgetConfig(newConfig);
       await fetch(`${API_URL}/tenants/${tenantId}/config`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           "x-dashboard-secret": process.env.NEXT_PUBLIC_DASHBOARD_SECRET || "",
         },
-        body: JSON.stringify(newConfig),
+        body: JSON.stringify(widgetConfig),
       });
     } catch (e) {
       console.error("Failed to save config", e);
+    } finally {
+      setSavingConfig(false);
     }
   };
-
-  const handleFeatureClick = (id: string) => {
-    setActiveFeature(id);
-    if (id === "agents") {
-      setIsCustomizationOpen(true);
-    }
-    // 'documents' is the default view so we just set active feature
-  };
-
-  // Transform docs for ListRow
-  const projectItems = docs.map((d) => ({
-    id: d.id,
-    name: d.title || d.url || "Untitled Document",
-    date: new Date(d.updatedAt).toLocaleDateString(),
-    size: d.sourceType === "scraped" ? "URL" : "File", // Meta mapped to type
-    icon: d.sourceType === "scraped" ? Globe : FileText,
-    iconColor:
-      d.sourceType === "scraped"
-        ? "bg-purple-500/20 text-purple-400"
-        : "bg-blue-500/20 text-blue-400",
-    status:
-      d.status === "processed"
-        ? ("success" as const)
-        : d.status === "failed" || d.status === "error"
-        ? ("error" as const)
-        : ("pending" as const),
-  }));
 
   // Map ingestion status to Activity Widget
   const activityItems =
@@ -356,10 +349,10 @@ export default function DashboardPage() {
       <div className="scene">
         <div className="curved-dashboard">
           {/* LEFT PANEL: Sidebar */}
-          <TiltPanel className="h-full w-[280px] rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden">
+          <TiltPanel className="h-full w-[260px] rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden">
             <SpatialSidebar
               activeItem={activeNav}
-              onItemClick={setActiveNav}
+              onItemClick={setActiveFeature}
               workspaceName="Kiosk"
               className="h-full w-full p-4"
             />
@@ -368,92 +361,133 @@ export default function DashboardPage() {
           {/* CENTER PANEL: Main Content */}
           <TiltPanel className="h-full flex-1 rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden relative group">
             <main className="flex-1 flex flex-col p-8 overflow-hidden pt-20">
-              {/* Feature Cards Grid - Row 1 */}
-              <div className="grid grid-cols-6 gap-3 mb-3">
+              {/* Feature Cards Grid - Always visible? Or maybe minimal when in Studio? 
+                  Let's keep it for navigation between modes */}
+              <div className="grid grid-cols-5 gap-3 mb-6 shrink-0">
                 {FEATURE_CARDS.map((card) => (
                   <FeatureCard
                     key={card.id}
                     icon={card.icon}
                     title={card.title}
                     active={activeFeature === card.id}
-                    onClick={() => handleFeatureClick(card.id)}
+                    onClick={() => setActiveFeature(card.id)}
                   />
                 ))}
               </div>
 
-              {/* Feature Cards Grid - Row 2 */}
-              {/* <div className="grid grid-cols-6 gap-3 mb-6">
-                {FEATURE_CARDS_ROW2.map((card) => (
-                  <FeatureCard
-                    key={card.id}
-                    icon={card.icon}
-                    title={card.title}
-                    active={activeFeature === card.id}
-                    onClick={() => handleFeatureClick(card.id)}
-                  />
-                ))}
-              </div> */}
-
-              {/* Projects (Documents) Section */}
-              <div className="flex-1 flex flex-col min-h-0">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-semibold text-white">
-                    Knowledge Base
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <button className="btn-secondary flex items-center gap-2 text-xs">
-                      <Filter size={14} /> Filter
-                    </button>
-                    <button className="btn-secondary flex items-center gap-2 text-xs">
-                      <Share2 size={14} /> Share
-                    </button>
-                    <button
-                      onClick={() => setIsManageSourcesOpen(true)}
-                      className="btn-primary flex items-center gap-2 text-xs py-2 px-4"
+              {/* Dynamic View Content */}
+              <div className="flex-1 min-h-0 relative">
+                <AnimatePresence mode="wait">
+                  {activeFeature === "documents" && (
+                    <motion.div
+                      key="knowledge"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="h-full"
                     >
-                      <Plus size={14} /> Add Source
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto space-y-1 pr-2">
-                  {projectItems.length > 0 ? (
-                    projectItems.map((item) => (
-                      <ListRow
-                        key={item.id}
-                        icon={item.icon}
-                        iconColor={item.iconColor}
-                        name={item.name}
-                        date={item.date}
-                        meta={item.size}
-                        status={item.status}
+                      <KnowledgeGrid
+                        docs={docs}
+                        onAddSource={() => setIsManageSourcesOpen(true)}
+                        onDeleteSource={handleDeleteSource}
                       />
-                    ))
-                  ) : (
-                    <div className="text-center py-10 text-white/40 text-sm">
-                      No documents found. Click "Add Source" to begin.
-                    </div>
+                    </motion.div>
                   )}
-                </div>
+
+                  {activeFeature === "agents" && (
+                    <motion.div
+                      key="studio"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      className="h-full -mx-4 md:-mx-8" // Negative margin to fill padding
+                    >
+                      <StudioEditor
+                        config={widgetConfig}
+                        updateConfig={handleUpdateConfig}
+                        onSave={handleSaveConfig}
+                        saving={savingConfig}
+                        tenantId={tenantId || ""}
+                      />
+                    </motion.div>
+                  )}
+
+                  {activeFeature === "pipelines" && (
+                    <motion.div
+                      key="pipelines"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="h-full"
+                    >
+                      <IntegrationView tenantId={tenantId} apiUrl={API_URL} />
+                    </motion.div>
+                  )}
+
+                  {activeFeature === "insights" && (
+                    <motion.div
+                      key="insights"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="h-full -mx-4 md:-mx-8"
+                    >
+                      <InsightsView stats={stats as any} />
+                    </motion.div>
+                  )}
+
+                  {activeFeature === "media" && (
+                    <motion.div
+                      key="media"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="h-full -mx-4 md:-mx-8"
+                    >
+                      <MediaView stats={stats as any} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </main>
           </TiltPanel>
 
           {/* RIGHT PANEL: Stats & Activity */}
           <div className="h-full w-[280px] flex flex-col gap-4">
-            {/* Top Section: 3/4 */}
-            <TiltPanel className="flex-[2] w-full rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden p-4">
-              <div className="flex-1 flex flex-col">
-                <RightPanel
-                  usedAmount={stats.totalChats}
-                  totalAmount={100} // Target?
-                  unit=" chats"
-                  className="p-0 border-none w-full flex-1"
-                />
-              </div>
+            {/* Top Section: Dynamic Content (Impact or Live Preview) */}
+            <TiltPanel className="flex-[2] w-full rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden p-0 relative">
+              <div className="absolute inset-0 bg-white/5 opacity-50 pointer-events-none" />
+              <AnimatePresence mode="wait">
+                {activeFeature === "agents" ? (
+                  <motion.div
+                    key="preview"
+                    initial={{ opacity: 0, rotateY: 90 }}
+                    animate={{ opacity: 1, rotateY: 0 }}
+                    exit={{ opacity: 0, rotateY: -90 }}
+                    transition={{ duration: 0.4 }}
+                    className="h-full w-full"
+                  >
+                    <LivePreview config={widgetConfig} />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="stats"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="h-full w-full p-4"
+                  >
+                    <UsageStats
+                      usedAmount={stats?.totalChats || 0}
+                      totalAmount={100}
+                      stats={stats || { totalChats: 0, totalMessages: 0 }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </TiltPanel>
 
-            {/* Bottom Section: 1/4 */}
+            {/* Bottom Section: Activity */}
             <TiltPanel className="flex-[1] w-full rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden p-4">
               <div className="flex-1 flex flex-col relative">
                 <ActivityWidget
@@ -465,15 +499,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* Modals - Rendered outside the scene context if possible, or using portals */}
-      <CustomizationModal
-        isOpen={isCustomizationOpen}
-        onClose={() => setIsCustomizationOpen(false)}
-        initialConfig={widgetConfig}
-        tenantId={tenantId || ""}
-        onSave={handleSaveConfig}
-      />
 
       <ManageSourcesModal
         isOpen={isManageSourcesOpen}
