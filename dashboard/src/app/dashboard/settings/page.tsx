@@ -1,6 +1,7 @@
 "use client";
 
 import { signOut } from "next-auth/react";
+import { AuthorizedOrigins } from "@/components/settings/AuthorizedOrigins";
 
 export default function SettingsPage() {
   const handleLogout = async () => {
@@ -20,6 +21,8 @@ export default function SettingsPage() {
           Manage your account and preferences
         </p>
       </header>
+
+      <AuthorizedOrigins />
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
         <h2 className="text-lg font-semibold mb-4">Account</h2>

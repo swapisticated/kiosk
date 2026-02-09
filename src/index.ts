@@ -6,6 +6,7 @@ import documentsRoute from "./routes/documents";
 import chatRoute from "./routes/chat";
 import authRoute from "./routes/auth";
 import statsRoute from "./routes/stats";
+import conversationsRoute from "./routes/conversations";
 import { dashboardAuth } from "./middleware/dashboardAuth";
 
 const app = new Hono();
@@ -31,6 +32,7 @@ app.route("/tenants", tenantsRoute);
 app.route("/documents", documentsRoute);
 app.route("/chat", chatRoute);
 app.route("/stats", statsRoute);
+app.route("/conversations", conversationsRoute);
 
 // Explicitly export fetch handler and port 8000
 export default {

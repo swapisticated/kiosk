@@ -10,25 +10,25 @@
   --glass: rgba(255, 255, 255, 0.08);
   --glass-light: rgba(255, 255, 255, 0.12);
   --glass-dark: rgba(0, 0, 0, 0.35);
-  
+
   /* Accent Colors */
   --accent-blue: #4f8cff;
   --accent-teal: #3dd6c6;
-  
+
   /* Spatial Theme */
   --background: #0a0a0c;
   --foreground: #eaeaec;
-  
+
   /* Glass Cards */
   --card: rgba(255, 255, 255, 0.05);
   --card-foreground: #ffffff;
-  
+
   --primary: #4f8cff;
   --primary-foreground: #ffffff;
-  
+
   --muted: rgba(255, 255, 255, 0.05);
   --muted-foreground: #a1a1aa;
-  
+
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(0, 0, 0, 0.4);
   --ring: rgba(255, 255, 255, 0.1);
@@ -36,11 +36,13 @@
   /* Specs */
   --radius: 20px;
   --radius-xl: 24px;
-  
+
   /* Shadows */
-  --shadow-glass: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
-  --shadow-glow: 0 0 0 1px rgba(79,140,255,0.6), 0 0 24px rgba(79,140,255,0.35);
-  --shadow-soft: 0 12px 24px rgba(0,0,0,0.35);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-glow: 0 0 0 1px rgba(79, 140, 255, 0.6),
+    0 0 24px rgba(79, 140, 255, 0.35);
+  --shadow-soft: 0 12px 24px rgba(0, 0, 0, 0.35);
 }
 
 @theme inline {
@@ -55,21 +57,21 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  
+
   /* Glass tokens */
   --color-glass: var(--glass);
   --color-glass-light: var(--glass-light);
   --color-glass-dark: var(--glass-dark);
   --color-accent-blue: var(--accent-blue);
   --color-accent-teal: var(--accent-teal);
-  
+
   --radius-glass: var(--radius);
   --radius-xl: var(--radius-xl);
-  
+
   --shadow-glass: var(--shadow-glass);
   --shadow-glow: var(--shadow-glow);
   --shadow-soft: var(--shadow-soft);
-  
+
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui;
 }
 
@@ -80,10 +82,6 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
-
-
-
-
 
 /* ============================================
    CINEMATIC CURVATURE
@@ -102,19 +100,19 @@ body {
 }
 
 .curved-dashboard {
-  width: 92vw;
-  max-width: 1600px;
+  width: 96vw;
+  max-width: 1660px;
   /* Adjust height to fit comfortably with padding/margins if needed, or just fill reasonably */
-  height: 85vh; 
+  height: 82vh;
 
   display: flex;
   gap: 16px;
   border-radius: 42px;
 
-  transform:
+  /* transform:
     scaleX(1.04)
     scaleY(0.96)
-    rotateX(0.6deg);
+    rotateX(0.6deg); */
 
   /* box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.4),
@@ -125,12 +123,10 @@ body {
   /* transform-style: preserve-3d; */
 }
 
-.glass{
-  
+.glass {
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(40px) brightness(1.2) saturate(1.2);
-  -webkit-backdrop-filter: blur(40px) brightness(1.2) saturate(1.2);
-
+  backdrop-filter: blur(20px) brightness(1.2) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) brightness(1.2) saturate(1.2);
 }
 
 /* ============================================
@@ -223,13 +219,24 @@ body {
    ============================================ */
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(79, 140, 255, 0.3); }
-  50% { box-shadow: 0 0 30px rgba(79, 140, 255, 0.5); }
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(79, 140, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(79, 140, 255, 0.5);
+  }
 }
 
 .animate-fade-in {

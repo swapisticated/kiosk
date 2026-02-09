@@ -36,6 +36,9 @@ import {
 
 // Modals
 import { ManageSourcesModal } from "@/components/ManageSourcesModal";
+import { AuthorizedOrigins } from "@/components/settings/AuthorizedOrigins";
+import { SupportView } from "@/components/spatial/views/SupportView";
+import { ComingSoon } from "@/components/spatial/views/ComingSoon";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -351,7 +354,7 @@ export default function DashboardPage() {
           {/* LEFT PANEL: Sidebar */}
           <TiltPanel className="h-full w-[260px] rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden">
             <SpatialSidebar
-              activeItem={activeNav}
+              activeItem={activeFeature}
               onItemClick={setActiveFeature}
               workspaceName="Kiosk"
               className="h-full w-full p-4"
@@ -447,6 +450,54 @@ export default function DashboardPage() {
                       <MediaView stats={stats as any} />
                     </motion.div>
                   )}
+
+                  {activeFeature === "settings" && (
+                    <motion.div
+                      key="settings"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="h-full max-w-4xl mx-auto overflow-y-auto pr-4 custom-scrollbar"
+                    >
+                      <h2 className="text-2xl font-bold text-white mb-6">
+                        Settings
+                      </h2>
+                      <AuthorizedOrigins />
+                    </motion.div>
+                  )}
+
+                  {activeFeature === "support" && (
+                    <motion.div
+                      key="support"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="h-full max-w-5xl mx-auto"
+                    >
+                      <SupportView />
+                    </motion.div>
+                  )}
+
+                  {(activeFeature === "members" ||
+                    activeFeature === "starred" ||
+                    activeFeature === "uploads" ||
+                    activeFeature === "notifications") && (
+                    <motion.div
+                      key="coming-soon"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="h-full"
+                    >
+                      <ComingSoon
+                        title={
+                          activeFeature.charAt(0).toUpperCase() +
+                          activeFeature.slice(1)
+                        }
+                        description={`The ${activeFeature} module is currently under active development.`}
+                      />
+                    </motion.div>
+                  )}
                 </AnimatePresence>
               </div>
             </main>
@@ -481,6 +532,7 @@ export default function DashboardPage() {
                       usedAmount={stats?.totalChats || 0}
                       totalAmount={100}
                       stats={stats || { totalChats: 0, totalMessages: 0 }}
+                      knowledgeCount={docs?.length || 0}
                     />
                   </motion.div>
                 )}

@@ -119,64 +119,63 @@ export default function SpatialDashboard() {
             <BrowserBar url="kiosk.app/dashboard" />
 
             <main className="flex-1 flex flex-col p-8 overflow-hidden">
-              {/* Feature Cards Grid - Row 1 */}
               <div className="grid grid-cols-6 gap-3 mb-3">
-                {FEATURE_CARDS.map((card) => (
-                  <FeatureCard
-                    key={card.id}
-                    icon={card.icon}
-                    title={card.title}
-                    active={activeFeature === card.id}
-                    onClick={() => setActiveFeature(card.id)}
-                  />
-                ))}
-              </div>
-
-              {/* Feature Cards Grid - Row 2 (partial) */}
-              <div className="grid grid-cols-6 gap-3 mb-6">
-                {FEATURE_CARDS_ROW2.map((card) => (
-                  <FeatureCard
-                    key={card.id}
-                    icon={card.icon}
-                    title={card.title}
-                    active={activeFeature === card.id}
-                    onClick={() => setActiveFeature(card.id)}
-                  />
-                ))}
-              </div>
-
-              {/* Projects Section */}
-              <div className="flex-1 flex flex-col min-h-0">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-semibold text-white">
-                    Projects
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <button className="btn-secondary flex items-center gap-2 text-xs">
-                      <Filter size={14} /> Filter
-                    </button>
-                    <button className="btn-secondary flex items-center gap-2 text-xs">
-                      <Share2 size={14} /> Share
-                    </button>
-                    <button className="btn-primary flex items-center gap-2 text-xs py-2 px-4">
-                      <Plus size={14} /> Create
-                    </button>
+                    {FEATURE_CARDS.map((card) => (
+                      <FeatureCard
+                        key={card.id}
+                        icon={card.icon}
+                        title={card.title}
+                        active={activeFeature === card.id}
+                        onClick={() => setActiveFeature(card.id)}
+                      />
+                    ))}
                   </div>
-                </div>
 
-                <div className="flex-1 overflow-y-auto space-y-1 pr-2">
-                  {PROJECT_ITEMS.map((item) => (
-                    <ListRow
-                      key={item.id}
-                      icon={item.icon}
-                      iconColor={item.iconColor}
-                      name={item.name}
-                      date={item.date}
-                      meta={item.size}
-                    />
-                  ))}
-                </div>
-              </div>
+                  {/* Feature Cards Grid - Row 2 (partial) */}
+                  <div className="grid grid-cols-6 gap-3 mb-6">
+                    {FEATURE_CARDS_ROW2.map((card) => (
+                      <FeatureCard
+                        key={card.id}
+                        icon={card.icon}
+                        title={card.title}
+                        active={activeFeature === card.id}
+                        onClick={() => setActiveFeature(card.id)}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Projects Section */}
+                  <div className="flex-1 flex flex-col min-h-0">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-base font-semibold text-white">
+                        Projects
+                      </h2>
+                      <div className="flex items-center gap-2">
+                        <button className="btn-secondary flex items-center gap-2 text-xs">
+                          <Filter size={14} /> Filter
+                        </button>
+                        <button className="btn-secondary flex items-center gap-2 text-xs">
+                          <Share2 size={14} /> Share
+                        </button>
+                        <button className="btn-primary flex items-center gap-2 text-xs py-2 px-4">
+                          <Plus size={14} /> Create
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-1 pr-2">
+                      {PROJECT_ITEMS.map((item) => (
+                        <ListRow
+                          key={item.id}
+                          icon={item.icon}
+                          iconColor={item.iconColor}
+                          name={item.name}
+                          date={item.date}
+                          meta={item.size}
+                        />
+                      ))}
+                    </div>
+                  </div>
             </main>
           </div>
 

@@ -35,7 +35,7 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "src/app/spatial/page.tsx"  ],
   "exclude": [
     "node_modules"
   ]

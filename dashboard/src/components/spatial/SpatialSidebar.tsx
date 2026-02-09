@@ -3,14 +3,25 @@
 import { cn } from "@/lib/utils";
 import { SidebarItem } from "./ui/SidebarItem";
 import {
-  LayoutGrid,
+  Sparkles,
   FolderOpen,
   Users,
   Star,
   Upload,
   Bell,
   Settings,
-  HelpCircle,
+  MessageSquare,
+  MessageCircle,
+  MessageCircleCodeIcon,
+  Home,
+  LucideHome,
+  CirclePile,
+  ChevronsLeftRight,
+  CircleSlash2,
+  CircleSlash2Icon,
+  CircleSlash,
+  MessageCircleMore,
+  Bot,
 } from "lucide-react";
 
 interface SpatialSidebarProps {
@@ -21,13 +32,14 @@ interface SpatialSidebarProps {
 }
 
 const NAV_ITEMS = [
-  { id: "files", icon: FolderOpen, label: "Agents" },
+  { id: "agents", icon: LucideHome, label: "Home" },
+  { id: "settings", icon: Settings, label: "Settings" },
+  { id: "support", icon: MessageCircleCodeIcon, label: "Connect" },
+
   { id: "members", icon: Users, label: "Members" },
   { id: "starred", icon: Star, label: "Starred" },
   { id: "uploads", icon: Upload, label: "Uploads" },
   { id: "notifications", icon: Bell, label: "Alerts" },
-  { id: "settings", icon: Settings, label: "Settings" },
-  { id: "support", icon: HelpCircle, label: "Support" },
 ];
 
 export function SpatialSidebar({
@@ -46,8 +58,9 @@ export function SpatialSidebar({
     >
       {/* Workspace Header */}
       <div className="flex items-center gap-3 mb-8 px-2">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-blue to-accent-teal flex items-center justify-center">
-          <LayoutGrid size={20} className="text-white" />
+        <div className="w-10 h-10 rounded-xl  flex items-center justify-center">
+          <CirclePile size={28} className="text-white" />
+
         </div>
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-white">

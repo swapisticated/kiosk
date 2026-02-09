@@ -112,7 +112,7 @@ export function StudioEditor({
           <button
             onClick={onSave}
             disabled={saving}
-            className="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-stone-200 disabled:opacity-50 text-sm transition-colors"
+            className="bg-white/10 text-white px-6 py-2 rounded-xl font-bold hover:bg-white/20 disabled:opacity-50 text-sm transition-colors"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>
@@ -153,12 +153,12 @@ export function StudioEditor({
         <div className="max-w-2xl space-y-8">
           {/* Magic Banner - Only show on Branding or General? or always? Let's keep it generally accessible or stick to branding. 
               Actually, keeping it at top is fine. */}
-          <div className="bg-gradient-to-r from-violet-600/10 to-indigo-600/10 border border-violet-500/20 rounded-2xl p-6 relative overflow-hidden group">
+          <div className="bg-white/2 rounded-2xl p-6 relative overflow-hidden group">
             <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,transparent,black)] pointer-events-none" />
             <div className="relative z-10 flex flex-col md:flex-row gap-4 items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Wand2 className="text-violet-400" size={16} /> Magic Match
+                  <Wand2 className="text-white" size={16} /> Magic Match
                 </h3>
                 <p className="text-xs text-stone-400 mt-1">
                   Extract brand colors from your website.
@@ -174,7 +174,7 @@ export function StudioEditor({
                 <button
                   onClick={handleMagicAnalysis}
                   disabled={analyzing}
-                  className="bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-50"
+                  className="bg-white/10 text-white px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-50"
                 >
                   {analyzing ? (
                     <Loader2 size={14} className="animate-spin" />

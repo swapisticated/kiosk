@@ -112,6 +112,9 @@ const widgetConfigSchema = z.object({
   incomingTextColor: z.string().optional(),
   outgoingTextColor: z.string().optional(),
   borderRadius: z.number().optional(),
+
+  // Allowed Origins (Test Mode)
+  allowedOrigins: z.array(z.string()).optional(),
 });
 
 // Update Config Route
@@ -153,14 +156,28 @@ tenantsRoute.patch(
       if (!existing) return c.json({ error: "Tenant not found" }, 404);
 
       const currentConfig = (existing.widgetConfig as any) || {};
-      const newConfig = { ...currentConfig, ...updates };
 
-      await db
-        .update(tenants)
-        .set({ widgetConfig: newConfig, updatedAt: new Date() })
-        .where(eq(tenants.id, tenantId));
+      // Separate allowedOrigins from widgetConfig
+      const { allowedOrigins, ...configUpdates } = updates;
+      const newConfig = { ...currentConfig, ...configUpdates };
 
-      return c.json({ success: true, config: newConfig });
+      const updateData: any = {
+        widgetConfig: newConfig,
+        updatedAt: new Date(),
+      };
+
+      // Update allowedOrigins if provided
+      if (allowedOrigins) {
+        updateData.allowedOrigins = allowedOrigins;
+      }
+
+      await db.update(tenants).set(updateData).where(eq(tenants.id, tenantId));
+
+      return c.json({
+        success: true,
+        config: newConfig,
+        allowedOrigins: allowedOrigins || existing.allowedOrigins,
+      });
     } catch (e) {
       console.error("Config update failed:", e);
       return c.json({ error: "Update failed" }, 500);

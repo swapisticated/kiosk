@@ -69,12 +69,15 @@ export function ListRow({
       )}
 
       {/* Overflow Menu */}
-      <button
-        onClick={onMenuClick}
-        className="p-2 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 opacity-0 group-hover:opacity-100 transition-all"
-      >
-        <MoreHorizontal size={18} />
-      </button>
+      {/* Overflow Menu */}
+      {onMenuClick && (
+        <button
+          onClick={onMenuClick}
+          className="p-2 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/5 opacity-0 group-hover:opacity-100 transition-all"
+        >
+          <MoreHorizontal size={18} />
+        </button>
+      )}
     </div>
   );
 }

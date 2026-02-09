@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { TrendingUp, Users, MessageSquare } from "lucide-react";
+import { TrendingUp, Users, MessageSquare, MessageCircleCodeIcon } from "lucide-react";
 
 interface ImpactMetricsProps {
   totalConversations: number;
@@ -41,7 +41,7 @@ export function ImpactMetrics({
 
         <div>
           <p className="text-sm text-stone-500 font-medium mb-1 flex items-center gap-2">
-            <MessageSquare size={14} /> Messages
+            <MessageCircleCodeIcon size={14} /> Messages
           </p>
           <p className="text-2xl font-bold text-stone-700 dark:text-stone-300">
             {totalMessages.toLocaleString()}
