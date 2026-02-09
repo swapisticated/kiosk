@@ -27,6 +27,11 @@ export async function crawlWithCheerio(
       maxRequestsPerCrawl: maxUrls,
       useSessionPool: false,
 
+      // 🔥 FORCE FIXED CONCURRENCY (NO AUTOSCALING)
+      // This prevents AutoscaledPool -> Snapshotter -> `ps` command usage
+      maxConcurrency: 3,
+      minConcurrency: 3,
+
       // Force HTTP/1.1 to fix Bun + got-scraping HTTP/2 issues
       preNavigationHooks: [
         async (_crawlingContext, gotOptions) => {

@@ -3,6 +3,8 @@
 import { cn } from "@/lib/utils";
 import { FileText, AlertCircle } from "lucide-react";
 
+import { LoaderCore } from "@/components/ui/multi-step-loader";
+
 interface ActivityItem {
   id: string;
   name: string;
@@ -25,62 +27,55 @@ export function ActivityWidget({
   items = DEFAULT_ITEMS,
   className,
 }: ActivityWidgetProps) {
+  // Calculate current active step for the loader
+  // Finds the index of the first item that is NOT complete.
+  // If all complete, header to end.
+  const activeIndex = items.findIndex(
+    (item) => item.status === "uploading" || item.status === "error"
+  );
+  const value =
+    activeIndex === -1 && items.length > 0
+      ? items.length
+      : activeIndex === -1
+      ? 0
+      : activeIndex;
+
+  const loadingStates = items.map((item) => ({
+    text:
+      item.status === "uploading"
+        ? `${item.name} (${Math.round(item.progress || 0)}%)`
+        : item.name,
+  }));
+
   return (
     <div
       className={cn(
         "absolute bottom-6 right-6 z-50",
         "w-[260px] p-4",
-        "glass rounded-2xl",
+        "rounded-2xl",
         className
       )}
     >
       {/* Header */}
       <h4 className="text-sm font-semibold text-white mb-4">Uploads</h4>
 
-      {/* Activity List */}
-      <div className="flex flex-col gap-3">
-        {items.map((item) => (
-          <div key={item.id} className="flex items-center gap-3">
-            {/* Icon */}
-            <div
-              className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                item.status === "error"
-                  ? "bg-red-500/20 text-red-400"
-                  : "bg-white/10 text-white/60"
-              )}
-            >
-              {item.status === "error" ? (
-                <AlertCircle size={16} />
-              ) : (
-                <FileText size={16} />
-              )}
+      {/* Activity List via MultiStepLoader Core */}
+      <div className="flex flex-col gap-3 min-h-[100px]">
+        {items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-white/20 gap-2">
+            <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
             </div>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-white/90 truncate">{item.name}</p>
-              {item.status === "uploading" && item.progress !== undefined && (
-                <div className="mt-1.5 h-1 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-accent-blue to-accent-teal rounded-full transition-all"
-                    style={{ width: `${item.progress}%` }}
-                  />
-                </div>
-              )}
-              {item.status === "complete" && item.size && (
-                <p className="text-xs text-white/40">{item.size}</p>
-              )}
-              {item.status === "error" && (
-                <p className="text-xs text-red-400">Error</p>
-              )}
-            </div>
+            <span className="text-sm font-medium tracking-wide">
+              SYSTEM IDLE
+            </span>
           </div>
-        ))}
+        ) : (
+          <div className="scale-90 origin-top-left -ml-2 w-[110%]">
+            <LoaderCore loadingStates={loadingStates} value={value} />
+          </div>
+        )}
       </div>
-
-      {/* Show All Button */}
-      <button className="btn-secondary w-full mt-4 text-xs">Show All</button>
     </div>
   );
 }

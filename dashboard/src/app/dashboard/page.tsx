@@ -32,6 +32,7 @@ import {
   Video,
   Bot,
   GitBranch,
+  MessageSquareDot,
 } from "lucide-react";
 
 // Modals
@@ -39,6 +40,7 @@ import { ManageSourcesModal } from "@/components/ManageSourcesModal";
 import { AuthorizedOrigins } from "@/components/settings/AuthorizedOrigins";
 import { SupportView } from "@/components/spatial/views/SupportView";
 import { ComingSoon } from "@/components/spatial/views/ComingSoon";
+import { LoadingState } from "@/components/spatial/LoadingState";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -46,7 +48,7 @@ const FEATURE_CARDS = [
   { id: "documents", icon: FileText, title: "Knowledge" },
   { id: "agents", icon: Bot, title: "Studio" },
   { id: "pipelines", icon: GitBranch, title: "Connect" },
-  { id: "media", icon: Image, title: "Media" },
+  { id: "media", icon: MessageSquareDot, title: "Conversations" },
   { id: "insights", icon: Lightbulb, title: "Insights" },
 ];
 
@@ -105,6 +107,14 @@ export default function DashboardPage() {
             },
           }
         );
+
+        if (!res.ok) {
+          console.error("Auth check failed:", res.status);
+          // If auth check fails, we shouldn't show the dashboard
+          // Maybe redirect to login or show error
+          return;
+        }
+
         const data = await res.json();
 
         if (data.hasTenant && data.tenant?.id) {
@@ -112,18 +122,27 @@ export default function DashboardPage() {
           setTenantId(data.tenant.id);
           setWidgetConfig(data.tenant.widgetConfig || {});
 
-          checkData(data.tenant.id);
+          // Only stop loading if we have a valid tenant and are staying on this page
+          checkData(data.tenant.id).finally(() => {
+            setLoading(false);
+          });
         } else if (data.requiresReauth) {
+          console.log("Reauth required, redirecting...");
           localStorage.removeItem("tenantId");
           localStorage.removeItem("apiKey");
           await signOut({ callbackUrl: "/login" });
+          // Don't set loading false, we are redirecting
         } else {
+          console.log("No tenant, redirecting to onboarding...");
           router.push("/onboarding");
+          // Don't set loading false, we are redirecting
         }
       } catch (err) {
         console.error("Failed to check tenant:", err);
+        // Ensure we don't get stuck in loading state endlessly if there's a network error
+        // But also don't show the dashboard if we couldn't verify tenant
+        // Ideally show an error state
       }
-      setLoading(false);
     };
 
     if (status === "authenticated") {
@@ -250,9 +269,16 @@ export default function DashboardPage() {
           }
         }
       } catch (err: any) {
-        if (err.name !== "AbortError") {
-          console.error("SSE connection error:", err);
+        // Ignore abort errors and stream interruptions
+        if (
+          err.name === "AbortError" ||
+          err.message?.includes("The operation was aborted") ||
+          err.message?.includes("Error in input stream")
+        ) {
+          // Normal closure or abort
+          return;
         }
+        console.error("SSE connection error:", err);
       }
     };
     connectSSE();
@@ -321,7 +347,8 @@ export default function DashboardPage() {
   };
 
   // Map ingestion status to Activity Widget
-  const activityItems =
+  // Map ingestion status to Activity Widget
+  const activeJob =
     ingestionStatus === "processing"
       ? [
           {
@@ -333,12 +360,10 @@ export default function DashboardPage() {
         ]
       : [];
 
+  const activityItems = [...activeJob];
+
   if (loading || status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   return (

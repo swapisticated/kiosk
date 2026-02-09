@@ -22,7 +22,9 @@ import {
   CircleSlash,
   MessageCircleMore,
   Bot,
+  LogOut,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 
 interface SpatialSidebarProps {
   activeItem?: string;
@@ -60,7 +62,6 @@ export function SpatialSidebar({
       <div className="flex items-center gap-3 mb-8 px-2">
         <div className="w-10 h-10 rounded-xl  flex items-center justify-center">
           <CirclePile size={28} className="text-white" />
-
         </div>
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-white">
@@ -82,6 +83,20 @@ export function SpatialSidebar({
           />
         ))}
       </nav>
+
+      {/* Logout Button */}
+      <div className="mt-auto pt-4 border-t border-white/5">
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-white/40 hover:text-red-400 rounded-lg transition-all group"
+        >
+          <LogOut
+            size={18}
+            className="group-hover:scale-110 transition-transform"
+          />
+          <span>Log Out</span>
+        </button>
+      </div>
     </aside>
   );
 }

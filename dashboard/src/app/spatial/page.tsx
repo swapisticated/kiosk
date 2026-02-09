@@ -31,7 +31,7 @@ const FEATURE_CARDS = [
   { id: "agents", icon: Bot, title: "Agents" },
   { id: "documents", icon: FileText, title: "Documents" },
   { id: "pipelines", icon: GitBranch, title: "Pipelines" },
-  { id: "media", icon: Image, title: "Media" },
+  { id: "media", icon: Image, title: "Conversation History" },
   { id: "insights", icon: Lightbulb, title: "Insights" },
   { id: "templates", icon: Layers, title: "Templates" },
 ];

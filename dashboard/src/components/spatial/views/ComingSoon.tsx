@@ -71,7 +71,7 @@ export function ComingSoon({ title, description }: ComingSoonProps) {
           </button>
         </form> */}
 
-        <div className="mt-16 flex items-center gap-4 text-xs font-mono text-white/20">
+        <div className="mt-16 flex items-center gap-4 text-xs font-mono text-white/50">
           <span>EST_ARRIVAL: Q3_2026</span>
           <span className="w-1 h-1 rounded-full bg-white/20" />
           <span>PRIORITY: HIGH</span>
