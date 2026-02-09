@@ -119,7 +119,7 @@ statsRoute.get("/", async (c) => {
 async function getHeatmapData(tenantId: string) {
   // SQLite: strftime('%w', ...) returns 0-6 (Sun-Sat)
   // strftime('%H', ...) returns 00-23
-  console.log("Fetching Heatmap Data for tenant:", tenantId);
+  // console.log("Fetching Heatmap Data for tenant:", tenantId);
   try {
     const data = await db
       .select({
@@ -135,12 +135,12 @@ async function getHeatmapData(tenantId: string) {
       )
       .all();
 
-    console.log(`Heatmap data length: ${data.length}`);
-    if (data.length > 0) {
-      console.log("Sample heatmap point:", data[0]);
-    } else {
-      console.log("Heatmap data is empty.");
-    }
+    // console.log(`Heatmap data length: ${data.length}`);
+    // if (data.length > 0) {
+      // console.log("Sample heatmap point:", data[0]);
+    // } else {
+      // console.log("Heatmap data is empty.");
+    // }
     return data;
   } catch (error) {
     console.error("Error fetching heatmap data:", error);
