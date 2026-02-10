@@ -28,8 +28,10 @@ FROM base AS prerelease
 COPY --from=install /tmp/dev/node_modules node_modules
 COPY . .
 
-# build the widget
-# this runs scripts/build-widget.ts
+USER root
+RUN mkdir -p dist && chown -R bun:bun dist
+USER bun
+
 RUN bun run build:widget
 
 # copy production dependencies and source code into final image
