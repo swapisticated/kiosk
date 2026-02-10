@@ -13,14 +13,14 @@ USER bun
 # install dependencies into temp directory
 # this will cache them and speed up future builds
 FROM base AS install
-RUN mkdir -p /temp/dev
-COPY package.json bun.lock /temp/dev/
-RUN cd /temp/dev && bun install --frozen-lockfile
+RUN mkdir -p /tmp/dev
+COPY package.json bun.lock /tmp/dev/
+RUN cd /tmp/dev && bun install --frozen-lockfile
 
 # install with --production (exclude devDependencies)
-RUN mkdir -p /temp/prod
-COPY package.json bun.lock /temp/prod/
-RUN cd /temp/prod && bun install --frozen-lockfile --production
+RUN mkdir -p /tmp/prod
+COPY package.json bun.lock /tmp/prod/
+RUN cd /tmp/prod && bun install --frozen-lockfile --production
 
 # copy node_modules from temp directory
 # then copy all (non-ignored) project files into the image
