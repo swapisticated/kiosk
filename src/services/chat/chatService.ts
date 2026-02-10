@@ -35,13 +35,26 @@ export async function answerQuestion(
     });
   }
 
-  // 1. Save User Message
+  // 1. Analyze Sentiment & Topics (Simple)
+  // Dynamic import for sentiment to avoid type issues if any
+  // @ts-ignore
+  const SentimentModule = await import("sentiment");
+  const Sentiment = SentimentModule.default || SentimentModule;
+  const sentiment = new Sentiment();
+  const analysis = sentiment.analyze(question);
+  const sentimentScore = analysis.score; // -5 to +5
+  // Simple topic extraction: words > 4 chars, filtered
+  const topics = analysis.tokens.filter((t: string) => t.length > 4);
+
+  // 2. Save User Message
   await db.insert(messages).values({
     id: nanoid(),
     tenantId,
     conversationId: conversationId!,
     role: "user",
     content: question,
+    sentimentScore,
+    topics,
   });
 
   // 2. Embed & Search

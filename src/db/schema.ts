@@ -20,7 +20,7 @@ export const users = sqliteTable("users", {
   ),
 });
 
-// ===================  
+// ===================
 // TENANTS
 // ===================
 export const tenants = sqliteTable("tenants", {
@@ -156,6 +156,8 @@ export const messages = sqliteTable("messages", {
   role: text("role", { enum: roleEnum }).notNull(),
   content: text("content").notNull(),
   sources: text("sources", { mode: "json" }).$type<string[]>(), // chunk IDs used
+  sentimentScore: integer("sentiment_score"), // -5 to +5
+  topics: text("topics", { mode: "json" }).$type<string[]>(), // extracted keywords
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
     () => new Date()
   ),

@@ -2,6 +2,7 @@ import { marked } from "marked";
 
 interface KioskConfig {
   tenantId: string;
+  // General
   theme?: "light" | "dark" | "system";
   position?: "bottom-right" | "bottom-left";
   primaryColor?: string;
@@ -10,11 +11,31 @@ interface KioskConfig {
   placeholderText?: string;
   apiUrl?: string;
   logoUrl?: string;
+  // Branding
+  fontFamily?: string;
+  headerStyle?: "solid" | "gradient" | "minimal";
+  // Interface
+  borderRadius?: number;
+  widgetSize?: "compact" | "default" | "large";
+  launcherIcon?: "chat" | "support" | "robot" | "wave";
+  launcherSize?: number;
+  windowWidth?: number;
+  windowHeight?: number;
+  // Chat Theme
   chatBackground?: string;
   chatBackgroundStyle?: "solid" | "gradient" | "pattern" | "image";
   incomingBubbleColor?: string;
   outgoingBubbleColor?: string;
-  borderRadius?: number;
+  incomingTextColor?: string;
+  outgoingTextColor?: string;
+  bubbleStyle?: "rounded" | "sharp" | "pill";
+  showTimestamps?: boolean;
+  typingIndicator?: "dots" | "text" | "pulse";
+  // Behavior
+  autoOpen?: boolean;
+  autoOpenDelay?: number;
+  soundEnabled?: boolean;
+  persistChat?: boolean;
 }
 
 declare global {
@@ -33,13 +54,34 @@ const DEFAULTS: Partial<KioskConfig> = {
   welcomeMessage: "Hello! How can I help you today?",
   placeholderText: "Type a message...",
   apiUrl: __API_URL__,
+  borderRadius: 12,
+  launcherSize: 56,
+  windowWidth: 360,
+  windowHeight: 480,
+  bubbleStyle: "rounded",
+  typingIndicator: "dots",
+  headerStyle: "solid",
+  launcherIcon: "chat",
 };
+
+const LAUNCHER_ICONS: Record<string, string> = {
+  chat: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>`,
+  support: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  robot: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" x2="8" y1="16" y2="16"/><line x1="16" x2="16" y1="16" y2="16"/></svg>`,
+  wave: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.5 12.5c0 .83-.67 1.5-1.5 1.5H7c-2.76 0-5-2.24-5-5s2.24-5 5-5c.71 0 1.39.15 2 .42"/><path d="M20 4s-2 2.17-2 4c0 1.1.9 2 2 2s2-.9 2-2c0-1.83-2-4-2-4z"/><path d="M15.66 3.34l.59.59a2 2 0 0 1 0 2.83l-1.74 1.74"/></svg>`,
+};
+
+function getLauncherIcon(key?: string): string {
+  return LAUNCHER_ICONS[key || "chat"] ?? LAUNCHER_ICONS.chat!;
+}
+
 class KioskChatWidget {
   private config: KioskConfig;
   private container: HTMLDivElement;
   private shadow: ShadowRoot;
   private isOpen = false;
   private sessionId: string;
+  private messages: { text: string; role: "user" | "bot"; time: Date }[] = [];
 
   constructor(config: KioskConfig) {
     this.config = { ...DEFAULTS, ...config } as KioskConfig;
@@ -47,9 +89,25 @@ class KioskChatWidget {
     this.container = document.createElement("div");
     this.shadow = this.container.attachShadow({ mode: "open" });
     document.body.appendChild(this.container);
+
+    // Load persisted messages
+    if (this.config.persistChat) {
+      this.loadPersistedMessages();
+    }
+
     this.render();
     this.addStyles();
     this.setupEvents();
+
+    // Auto-open
+    if (this.config.autoOpen) {
+      const delay = (this.config.autoOpenDelay ?? 3) * 1000;
+      setTimeout(() => {
+        if (!this.isOpen) {
+          this.toggleOpen();
+        }
+      }, delay);
+    }
   }
 
   private getOrCreateSession(): string {
@@ -62,13 +120,121 @@ class KioskChatWidget {
     return sid;
   }
 
+  private loadPersistedMessages() {
+    try {
+      const KEY = `kiosk_history_${this.config.tenantId}`;
+      const stored = localStorage.getItem(KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        this.messages = parsed.map((m: any) => ({
+          ...m,
+          time: new Date(m.time),
+        }));
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  private persistMessages() {
+    if (!this.config.persistChat) return;
+    try {
+      const KEY = `kiosk_history_${this.config.tenantId}`;
+      localStorage.setItem(KEY, JSON.stringify(this.messages));
+    } catch {
+      // ignore
+    }
+  }
+
+  private getWindowDimensions() {
+    const size = this.config.widgetSize || "default";
+    let w = this.config.windowWidth ?? 360;
+    let h = this.config.windowHeight ?? 480;
+
+    if (size === "compact") {
+      w = Math.min(w, 340);
+      h = Math.min(h, 420);
+    } else if (size === "large") {
+      w = Math.max(w, 400);
+      h = Math.max(h, 540);
+    }
+
+    return { w, h };
+  }
+
+  private getBubbleRadius() {
+    const style = this.config.bubbleStyle || "rounded";
+    switch (style) {
+      case "sharp":
+        return "4px";
+      case "pill":
+        return "20px";
+      default:
+        return "12px";
+    }
+  }
+
+  private getBubbleCornerOverride(role: "user" | "bot") {
+    const style = this.config.bubbleStyle || "rounded";
+    if (style === "pill") return "";
+    const corner =
+      role === "bot"
+        ? "border-bottom-left-radius"
+        : "border-bottom-right-radius";
+    return `${corner}: ${style === "sharp" ? "0px" : "4px"};`;
+  }
+
+  private formatTime(date: Date): string {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  private getTypingHtml(): string {
+    const style = this.config.typingIndicator || "dots";
+    switch (style) {
+      case "text":
+        return "Thinking...";
+      case "pulse":
+        return `<span class="typing-pulse"></span>`;
+      default:
+        return `<span class="typing-dots"><span></span><span></span><span></span></span>`;
+    }
+  }
+
   private render() {
     const pos =
       this.config.position === "bottom-left" ? "left: 20px;" : "right: 20px;";
+    const launcherSize = this.config.launcherSize ?? 56;
+    const iconKey = this.config.launcherIcon || "chat";
+    const iconSvg = LAUNCHER_ICONS[iconKey] || LAUNCHER_ICONS.chat;
 
     const logoHtml = this.config.logoUrl
       ? `<img src="${this.config.logoUrl}" class="bot-logo" />`
       : `<div class="bot-icon">AI</div>`;
+
+    // Build persisted messages HTML
+    let messagesHtml = "";
+    if (this.messages.length > 0) {
+      messagesHtml = this.messages
+        .map((m) => {
+          const content =
+            m.role === "bot" ? (marked.parse(m.text) as string) : m.text;
+          const timestamp = this.config.showTimestamps
+            ? `<span class="msg-time">${this.formatTime(m.time)}</span>`
+            : "";
+          return `<div class="msg ${m.role}">${content}${timestamp}</div>`;
+        })
+        .join("");
+    } else {
+      const timestamp = this.config.showTimestamps
+        ? `<span class="msg-time">${this.formatTime(new Date())}</span>`
+        : "";
+      messagesHtml = `<div class="msg bot">${this.config.welcomeMessage}${timestamp}</div>`;
+      this.messages.push({
+        text: this.config.welcomeMessage!,
+        role: "bot",
+        time: new Date(),
+      });
+    }
 
     this.shadow.innerHTML = `
       <div class="widget" style="${pos}">
@@ -81,7 +247,7 @@ class KioskChatWidget {
             <button class="close">✕</button>
           </div>
           <div class="messages">
-            <div class="msg bot">${this.config.welcomeMessage}</div>
+            ${messagesHtml}
           </div>
           <div class="input-area">
             <div class="input-wrapper">
@@ -91,7 +257,7 @@ class KioskChatWidget {
             <div class="attribution">Powered by Kiosk</div>
           </div>
         </div>
-        <button class="toggle">💬</button>
+        <button class="toggle" style="width:${launcherSize}px;height:${launcherSize}px;">${iconSvg}</button>
       </div>
     `;
   }
@@ -105,6 +271,26 @@ class KioskChatWidget {
     const incomingBg =
       this.config.incomingBubbleColor || (isDark ? "#262626" : "#fff");
     const outgoingBg = this.config.outgoingBubbleColor || primary;
+    const borderRadius = this.config.borderRadius ?? 12;
+    const bubbleRadius = this.getBubbleRadius();
+    const { w: winW, h: winH } = this.getWindowDimensions();
+    const launcherSize = this.config.launcherSize ?? 56;
+    const fontFamily =
+      this.config.fontFamily ||
+      `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+
+    // Header style
+    let headerBg = primary;
+    let headerBorder = "none";
+    if (this.config.headerStyle === "gradient") {
+      headerBg = `linear-gradient(135deg, ${primary}, ${this.adjustColor(
+        primary!,
+        30
+      )})`;
+    } else if (this.config.headerStyle === "minimal") {
+      headerBg = isDark ? "#1a1a1a" : "#fff";
+      headerBorder = `1px solid ${isDark ? "#333" : "#e5e7eb"}`;
+    }
 
     let bgStyle = isDark ? "#0d0d0d" : "#f9fafb";
     let bgSize = "cover";
@@ -113,14 +299,28 @@ class KioskChatWidget {
     if (this.config.chatBackground) {
       const bg = this.config.chatBackground;
       bgStyle = bg.includes("(") ? bg : `url(${bg})`;
-
-      // If it's a known pattern or the user explicitly chose pattern style
       if (
         bg.includes("pattern") ||
         this.config.chatBackgroundStyle === "pattern"
       ) {
         bgSize = "auto";
         bgRepeat = "repeat";
+      }
+    }
+
+    // Load Google Font if needed
+    if (this.config.fontFamily && !this.config.fontFamily.includes("system")) {
+      const fontName = this.config.fontFamily
+        .split("'")
+        .filter((s) => s.trim() && s.trim() !== ",")[0];
+      if (fontName) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(
+          / /g,
+          "+"
+        )}:wght@400;500;600;700&display=swap`;
+        this.shadow.appendChild(link);
       }
     }
 
@@ -131,64 +331,86 @@ class KioskChatWidget {
         position: fixed;
         bottom: 20px;
         z-index: 999999;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: ${fontFamily};
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         cursor: default;
       }
+      *, *::before, *::after { box-sizing: border-box; }
       .toggle {
-        width: 56px;
-        height: 56px;
+        width: ${launcherSize}px;
+        height: ${launcherSize}px;
         border-radius: 50%;
         background: ${primary};
         color: #fff;
         border: none;
         cursor: pointer;
         font-size: 24px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        transition: transform 0.2s;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-      .toggle:hover { transform: scale(1.05); }
+      .toggle:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(0,0,0,0.3); }
+      .toggle svg { width: ${Math.round(
+        launcherSize * 0.43
+      )}px; height: ${Math.round(launcherSize * 0.43)}px; }
       .window {
         position: absolute;
-        bottom: 70px;
+        bottom: ${launcherSize + 14}px;
         ${this.config.position === "bottom-left" ? "left: 0;" : "right: 0;"}
-        width: 360px;
-        height: 480px;
+        width: ${winW}px;
+        height: ${winH}px;
         background: ${isDark ? "#1a1a1a" : "#fff"};
-        border-radius: 12px;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        border-radius: ${borderRadius}px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15), 0 0 0 1px ${
+          isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"
+        };
         display: flex;
         flex-direction: column;
         overflow: hidden;
         border: 1px solid ${isDark ? "#333" : "#e5e7eb"};
+        animation: windowIn 0.25s ease-out;
+      }
+      @keyframes windowIn {
+        from { opacity: 0; transform: translateY(10px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
       }
       .window.hidden { display: none; }
       .header {
-        background: ${primary};
-        color: #fff;
+        background: ${headerBg};
+        color: ${
+          this.config.headerStyle === "minimal"
+            ? isDark
+              ? "#e5e5e5"
+              : "#1f2937"
+            : "#fff"
+        };
         padding: 14px 16px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         font-weight: 600;
+        ${headerBorder !== "none" ? `border-bottom: ${headerBorder};` : ""}
       }
       .header-info { display: flex; align-items: center; gap: 10px; }
-      .bot-logo { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; background: rgba(255,255,255,0.2); }
-      .bot-icon { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 10px; }
+      .bot-logo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: rgba(255,255,255,0.2); }
+      .bot-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
       .close {
         background: none;
         border: none;
-        color: #fff;
+        color: inherit;
         cursor: pointer;
         font-size: 16px;
-        opacity: 0.8;
+        opacity: 0.7;
+        transition: opacity 0.15s;
       }
       .close:hover { opacity: 1; }
       .messages {
         flex: 1;
-        padding: 12px;
+        padding: 16px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
@@ -197,34 +419,93 @@ class KioskChatWidget {
         background-size: ${bgSize};
         background-repeat: ${bgRepeat};
         background-position: center;
+        scrollbar-width: thin;
+        scrollbar-color: ${
+          isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"
+        } transparent;
       }
+      .messages::-webkit-scrollbar { width: 4px; }
+      .messages::-webkit-scrollbar-thumb { background: ${
+        isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"
+      }; border-radius: 4px; }
       .msg {
-        max-width: 80%;
+        max-width: 82%;
         padding: 10px 14px;
-        border-radius: 12px;
+        border-radius: ${bubbleRadius};
         font-size: 14px;
-        line-height: 1.4;
+        line-height: 1.5;
         animation: fadeIn 0.2s ease;
+        position: relative;
+      }
+      .msg-time {
+        display: block;
+        font-size: 10px;
+        opacity: 0.5;
+        margin-top: 4px;
+        font-weight: 400;
       }
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(8px); }
+        from { opacity: 0; transform: translateY(6px); }
         to { opacity: 1; transform: translateY(0); }
       }
       .msg.bot {
         background: ${incomingBg};
-        color: ${isDark ? "#e5e5e5" : "#1f2937"};
+        color: ${
+          this.config.incomingTextColor || (isDark ? "#e5e5e5" : "#1f2937")
+        };
         align-self: flex-start;
-        border-bottom-left-radius: 4px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        ${this.getBubbleCornerOverride("bot")}
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
       }
       .msg.user {
         background: ${outgoingBg};
-        color: #fff;
+        color: ${this.config.outgoingTextColor || "#fff"};
         align-self: flex-end;
-        border-bottom-right-radius: 4px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        ${this.getBubbleCornerOverride("user")}
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
       }
-      .msg.typing { color: ${isDark ? "#888" : "#666"}; font-style: italic; }
+      .msg.typing {
+        color: ${isDark ? "#888" : "#666"};
+        font-style: italic;
+        background: ${incomingBg};
+        align-self: flex-start;
+        ${this.getBubbleCornerOverride("bot")}
+      }
+
+      /* Typing indicators */
+      .typing-dots {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+        height: 20px;
+      }
+      .typing-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        opacity: 0.4;
+        animation: dotPulse 1.4s infinite ease-in-out;
+      }
+      .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+      .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes dotPulse {
+        0%, 80%, 100% { opacity: 0.4; transform: scale(1); }
+        40% { opacity: 1; transform: scale(1.2); }
+      }
+      .typing-pulse {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: pulse 1s infinite ease-in-out;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.3; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+      }
+
       .input-area {
         padding: 12px;
         background: ${isDark ? "#1a1a1a" : "#fff"};
@@ -245,8 +526,10 @@ class KioskChatWidget {
         border-radius: 20px;
         outline: none;
         font-size: 14px;
+        font-family: inherit;
         background: ${isDark ? "#0d0d0d" : "#f9fafb"};
         color: ${isDark ? "#e5e5e5" : "#1f2937"};
+        transition: border-color 0.15s;
       }
       .input-area input:focus { border-color: ${primary}; }
       .send {
@@ -258,6 +541,8 @@ class KioskChatWidget {
         border-radius: 50%;
         cursor: pointer;
         font-size: 16px;
+        transition: opacity 0.15s;
+        flex-shrink: 0;
       }
       .attribution {
         text-align: center;
@@ -286,24 +571,41 @@ class KioskChatWidget {
     this.shadow.appendChild(style);
   }
 
+  private adjustColor(hex: string, amount: number): string {
+    const num = parseInt(hex.replace("#", ""), 16);
+    const r = Math.min(255, ((num >> 16) & 0xff) + amount);
+    const g = Math.min(255, ((num >> 8) & 0xff) + amount);
+    const b = Math.min(255, (num & 0xff) + amount);
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+  }
+
+  private toggleOpen() {
+    this.isOpen = !this.isOpen;
+    const win = this.shadow.querySelector(".window") as HTMLElement;
+    const toggle = this.shadow.querySelector(".toggle") as HTMLElement;
+    win.classList.toggle("hidden", !this.isOpen);
+    toggle.innerHTML = this.isOpen
+      ? "✕"
+      : getLauncherIcon(this.config.launcherIcon);
+    if (this.isOpen) {
+      const input = this.shadow.querySelector("input") as HTMLInputElement;
+      input?.focus();
+    }
+  }
+
   private setupEvents() {
     const toggle = this.shadow.querySelector(".toggle") as HTMLElement;
     const close = this.shadow.querySelector(".close") as HTMLElement;
     const send = this.shadow.querySelector(".send") as HTMLButtonElement;
     const input = this.shadow.querySelector("input") as HTMLInputElement;
-    const window = this.shadow.querySelector(".window") as HTMLElement;
 
-    toggle.onclick = () => {
-      this.isOpen = !this.isOpen;
-      window.classList.toggle("hidden", !this.isOpen);
-      toggle.textContent = this.isOpen ? "✕" : "💬";
-      if (this.isOpen) input.focus();
-    };
+    toggle.onclick = () => this.toggleOpen();
 
     close.onclick = () => {
       this.isOpen = false;
-      window.classList.add("hidden");
-      toggle.textContent = "💬";
+      const win = this.shadow.querySelector(".window") as HTMLElement;
+      win.classList.add("hidden");
+      toggle.innerHTML = getLauncherIcon(this.config.launcherIcon);
     };
 
     const sendMsg = async () => {
@@ -330,19 +632,61 @@ class KioskChatWidget {
     const el = document.createElement("div");
     el.className = `msg ${role}`;
 
-    if (role === "bot") {
-      el.innerHTML = marked.parse(text) as string;
+    if (role === "typing") {
+      el.innerHTML = this.getTypingHtml();
+    } else if (role === "bot") {
+      let html = marked.parse(text) as string;
+      if (this.config.showTimestamps) {
+        html += `<span class="msg-time">${this.formatTime(new Date())}</span>`;
+      }
+      el.innerHTML = html;
     } else {
       el.textContent = text;
+      if (this.config.showTimestamps) {
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "msg-time";
+        timeSpan.textContent = this.formatTime(new Date());
+        el.appendChild(timeSpan);
+      }
     }
 
     messages.appendChild(el);
     messages.scrollTop = messages.scrollHeight;
+
+    // Track for persistence
+    if (role !== "typing") {
+      this.messages.push({ text, role, time: new Date() });
+      this.persistMessages();
+    }
+
+    // Play sound on bot message
+    if (role === "bot" && this.config.soundEnabled) {
+      this.playNotificationSound();
+    }
+
     return el;
   }
 
+  private playNotificationSound() {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.setValueAtTime(600, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+    } catch {
+      // Audio not available
+    }
+  }
+
   private async fetchResponse(text: string) {
-    const typing = this.addMessage("Thinking...", "typing");
+    const typing = this.addMessage("", "typing");
     try {
       const res = await fetch(`${this.config.apiUrl}/chat`, {
         method: "POST",
@@ -373,7 +717,6 @@ class KioskChatWidget {
       );
       if (res.ok) {
         const data = await res.json();
-        // Merge remote config (e.g. primaryColor, botName, logoUrl, etc.)
         if (data.config) {
           Object.assign(fullConfig, data.config);
         }

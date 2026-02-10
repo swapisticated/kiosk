@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { MessageCircle, Send, X } from "lucide-react";
+import { MessageCircle, MessageSquare, Bot, Hand, Send, X } from "lucide-react";
 
 interface WidgetConfig {
   botName?: string;
@@ -9,6 +9,7 @@ interface WidgetConfig {
   placeholderText?: string;
   primaryColor?: string;
   fontFamily?: string;
+  headerStyle?: "solid" | "gradient" | "minimal";
   theme?: "light" | "dark" | "system";
   position?: "bottom-right" | "bottom-left";
   logoUrl?: string;
@@ -16,14 +17,50 @@ interface WidgetConfig {
   chatBackgroundStyle?: "solid" | "gradient" | "pattern" | "image";
   incomingBubbleColor?: string;
   outgoingBubbleColor?: string;
+  incomingTextColor?: string;
+  outgoingTextColor?: string;
   borderRadius?: number;
+  widgetSize?: "compact" | "default" | "large";
+  bubbleStyle?: "rounded" | "sharp" | "pill";
+  showTimestamps?: boolean;
+  typingIndicator?: "dots" | "text" | "pulse";
+  launcherIcon?: "chat" | "support" | "robot" | "wave";
+  launcherSize?: number;
+  windowWidth?: number;
+  windowHeight?: number;
 }
 
 interface LivePreviewProps {
   primaryColor?: string;
   botName?: string;
-  config?: WidgetConfig; // Optional full config
+  config?: WidgetConfig;
   className?: string;
+}
+
+const LAUNCHER_ICONS: Record<string, typeof MessageCircle> = {
+  chat: MessageCircle,
+  support: MessageSquare,
+  robot: Bot,
+  wave: Hand,
+};
+
+function getBubbleRadius(style?: string) {
+  switch (style) {
+    case "sharp":
+      return "6px";
+    case "pill":
+      return "20px";
+    default:
+      return "16px";
+  }
+}
+
+function adjustColor(hex: string, amount: number): string {
+  const num = parseInt(hex.replace("#", ""), 16);
+  const r = Math.min(255, ((num >> 16) & 0xff) + amount);
+  const g = Math.min(255, ((num >> 8) & 0xff) + amount);
+  const b = Math.min(255, (num & 0xff) + amount);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }
 
 export function LivePreview({
@@ -32,14 +69,34 @@ export function LivePreview({
   config,
   className,
 }: LivePreviewProps) {
-  // Merge props with config (config takes precedence if present)
   const primaryColor = config?.primaryColor || propColor;
   const botName = config?.botName || propName;
   const welcomeMessage =
     config?.welcomeMessage || "Hello! 👋 How can I help you today?";
   const placeholderText = config?.placeholderText || "Type a message...";
+  const borderRadius = config?.borderRadius ?? 12;
+  const bubbleStyle = config?.bubbleStyle || "rounded";
+  const bubbleRadius = getBubbleRadius(bubbleStyle);
+  const isDark = config?.theme === "dark";
+  const headerStyle = config?.headerStyle || "solid";
+  const showTimestamps = config?.showTimestamps ?? false;
+  const LauncherIcon =
+    LAUNCHER_ICONS[config?.launcherIcon || "chat"] || MessageCircle;
 
-  // Custom Styles
+  // Header background
+  let headerBg = primaryColor;
+  let headerTextColor = "#fff";
+  if (headerStyle === "gradient") {
+    headerBg = `linear-gradient(135deg, ${primaryColor}, ${adjustColor(
+      primaryColor,
+      40
+    )})`;
+  } else if (headerStyle === "minimal") {
+    headerBg = isDark ? "#1a1a1a" : "#ffffff";
+    headerTextColor = isDark ? "#e5e5e5" : "#1f2937";
+  }
+
+  // Chat background
   const chatBg: React.CSSProperties = config?.chatBackground
     ? {
         backgroundImage:
@@ -64,6 +121,24 @@ export function LivePreview({
       }
     : {};
 
+  // Bubble colors
+  const incomingBg =
+    config?.incomingBubbleColor || (isDark ? "#262626" : "#fff");
+  const outgoingBg = config?.outgoingBubbleColor || primaryColor;
+  const incomingText =
+    config?.incomingTextColor || (isDark ? "#e5e5e5" : "#1f2937");
+  const outgoingText = config?.outgoingTextColor || "#fff";
+
+  // Corner overrides for bubble style
+  const botCornerStyle: React.CSSProperties =
+    bubbleStyle === "pill"
+      ? {}
+      : { borderBottomLeftRadius: bubbleStyle === "sharp" ? "0px" : "4px" };
+  const userCornerStyle: React.CSSProperties =
+    bubbleStyle === "pill"
+      ? {}
+      : { borderBottomRightRadius: bubbleStyle === "sharp" ? "0px" : "4px" };
+
   return (
     <div
       className={cn(
@@ -76,15 +151,38 @@ export function LivePreview({
         <p className="text-sm text-white/50 font-medium">Test your widget</p>
       </div>
 
-      {/* Mock Browser/Device or Floating Widget */}
-      <div className="relative w-full max-w-[280px] bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden border border-stone-100 dark:border-zinc-800 transform transition-transform md:scale-95 origin-center mx-auto">
+      {/* Widget Preview */}
+      <div
+        className="relative w-full max-w-[280px] shadow-2xl overflow-hidden border transform transition-all md:scale-95 origin-center mx-auto"
+        style={{
+          borderRadius: `${borderRadius}px`,
+          backgroundColor: isDark ? "#1a1a1a" : "#fff",
+          borderColor: isDark ? "#333" : "#e5e7eb",
+          fontFamily: config?.fontFamily || "inherit",
+        }}
+      >
         {/* Header */}
         <div
-          className="p-4 flex justify-between items-center text-white"
-          style={{ backgroundColor: primaryColor }}
+          className="p-4 flex justify-between items-center"
+          style={{
+            background: headerBg,
+            color: headerTextColor,
+            borderBottom:
+              headerStyle === "minimal"
+                ? `1px solid ${isDark ? "#333" : "#e5e7eb"}`
+                : "none",
+          }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
+              style={{
+                backgroundColor:
+                  headerStyle === "minimal"
+                    ? primaryColor
+                    : "rgba(255,255,255,0.2)",
+              }}
+            >
               {config?.logoUrl ? (
                 <img
                   src={config.logoUrl}
@@ -92,78 +190,161 @@ export function LivePreview({
                   alt="Avatar"
                 />
               ) : (
-                <MessageCircle size={16} />
+                <LauncherIcon
+                  size={14}
+                  color={headerStyle === "minimal" ? "#fff" : "currentColor"}
+                />
               )}
             </div>
             <div>
               <p className="font-bold text-sm">{botName}</p>
-              <p className="text-xs opacity-90">Online</p>
+              <p className="text-xs opacity-70">Online</p>
             </div>
           </div>
-          <X size={18} className="opacity-80" />
+          <X
+            size={18}
+            className="opacity-60 cursor-pointer hover:opacity-100 transition-opacity"
+          />
         </div>
 
         {/* Chat Area */}
         <div
-          className="h-[260px] bg-stone-50 dark:bg-zinc-900/50 p-4 space-y-3 overflow-y-auto"
-          style={chatBg}
+          className="h-[220px] p-4 space-y-3 overflow-y-auto"
+          style={{
+            backgroundColor: isDark ? "#0d0d0d" : "#f9fafb",
+            ...chatBg,
+          }}
         >
+          {/* Bot message */}
           <div className="flex gap-2">
-            {!config?.chatBackground && (
-              <div
-                className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px]"
-                style={{ backgroundColor: primaryColor }}
-              >
-                AI
-              </div>
-            )}
-
             <div
-              className="bg-white dark:bg-zinc-800 p-3 rounded-2xl rounded-tl-none text-sm text-stone-700 dark:text-stone-300 shadow-sm max-w-[80%]"
+              className="p-3 text-sm shadow-sm max-w-[85%]"
               style={{
-                backgroundColor: config?.incomingBubbleColor,
+                borderRadius: bubbleRadius,
+                backgroundColor: incomingBg,
+                color: incomingText,
+                ...botCornerStyle,
               }}
             >
               {welcomeMessage}
+              {showTimestamps && (
+                <span className="block text-[9px] opacity-40 mt-1">
+                  12:00 PM
+                </span>
+              )}
             </div>
           </div>
 
+          {/* User message */}
           <div className="flex gap-2 justify-end">
             <div
-              className="bg-stone-200 dark:bg-zinc-700 p-3 rounded-2xl rounded-tr-none text-sm text-stone-800 dark:text-stone-200 max-w-[80%]"
+              className="p-3 text-sm max-w-[85%]"
               style={{
-                backgroundColor:
-                  config?.outgoingBubbleColor || config?.primaryColor,
-                color:
-                  config?.outgoingBubbleColor || config?.primaryColor
-                    ? "#fff" // Simply force white if colored bubble for now
-                    : undefined,
+                borderRadius: bubbleRadius,
+                backgroundColor: outgoingBg,
+                color: outgoingText,
+                ...userCornerStyle,
               }}
             >
               Just testing the look and feel!
+              {showTimestamps && (
+                <span className="block text-[9px] opacity-50 mt-1">
+                  12:01 PM
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Typing indicator */}
+          <div className="flex gap-2">
+            <div
+              className="p-3 text-sm"
+              style={{
+                borderRadius: bubbleRadius,
+                backgroundColor: incomingBg,
+                color: incomingText,
+                ...botCornerStyle,
+                opacity: 0.7,
+              }}
+            >
+              {config?.typingIndicator === "text" ? (
+                <span className="italic text-xs opacity-60">Thinking...</span>
+              ) : config?.typingIndicator === "pulse" ? (
+                <span
+                  className="inline-block w-2 h-2 rounded-full animate-pulse"
+                  style={{ backgroundColor: incomingText }}
+                />
+              ) : (
+                <span className="flex gap-1 items-center h-4">
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className="w-1.5 h-1.5 rounded-full animate-bounce"
+                      style={{
+                        backgroundColor: incomingText,
+                        opacity: 0.5,
+                        animationDelay: `${i * 0.15}s`,
+                      }}
+                    />
+                  ))}
+                </span>
+              )}
             </div>
           </div>
         </div>
 
         {/* Input Area */}
-        <div className="p-3 bg-white dark:bg-zinc-900 border-t border-stone-100 dark:border-zinc-800">
-          <div className="flex items-center gap-2 bg-stone-50 dark:bg-zinc-800 px-3 py-2 rounded-full">
+        <div
+          className="p-3 border-t"
+          style={{
+            backgroundColor: isDark ? "#1a1a1a" : "#fff",
+            borderColor: isDark ? "#333" : "#e5e7eb",
+          }}
+        >
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-full"
+            style={{
+              backgroundColor: isDark ? "#0d0d0d" : "#f3f4f6",
+            }}
+          >
             <input
               type="text"
               placeholder={placeholderText}
-              className="bg-transparent text-sm w-full focus:outline-none text-stone-800 dark:text-stone-200"
+              className="bg-transparent text-sm w-full focus:outline-none"
+              style={{ color: isDark ? "#e5e5e5" : "#1f2937" }}
               disabled
             />
             <button
-              className="p-1.5 rounded-full text-white transition-opacity hover:opacity-90"
+              className="p-1.5 rounded-full text-white transition-opacity hover:opacity-90 shrink-0"
               style={{ backgroundColor: primaryColor }}
             >
-              <Send size={14} />
+              <Send size={12} />
             </button>
           </div>
           <div className="text-center mt-2">
-            <p className="text-[10px] text-stone-400">Powered by Kiosk</p>
+            <p
+              className="text-[10px]"
+              style={{ color: isDark ? "#666" : "#9ca3af" }}
+            >
+              Powered by Kiosk
+            </p>
           </div>
+        </div>
+      </div>
+
+      {/* Launcher button preview */}
+      <div className="mt-4 flex justify-center">
+        <div
+          className="rounded-full flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105 cursor-pointer"
+          style={{
+            width: `${Math.min(config?.launcherSize ?? 56, 52)}px`,
+            height: `${Math.min(config?.launcherSize ?? 56, 52)}px`,
+            backgroundColor: primaryColor,
+          }}
+        >
+          <LauncherIcon
+            size={Math.min((config?.launcherSize ?? 56) * 0.4, 20)}
+          />
         </div>
       </div>
     </div>

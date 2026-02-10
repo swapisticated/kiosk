@@ -107,7 +107,8 @@ statsRoute.get("/", async (c) => {
       recentChats: recentChatsWithDetails,
       activity: activityData.reverse(), // Ascending order
       heatmap: await getHeatmapData(tenantId),
-      topKeywords: await getTopKeywords(tenantId),
+      topKeywords: await getTopKeywords(tenantId), // Uses stored topics if available
+      sentiment: await getSentimentStats(tenantId),
     });
   } catch (error) {
     console.error("Stats error:", error);
@@ -137,9 +138,9 @@ async function getHeatmapData(tenantId: string) {
 
     // console.log(`Heatmap data length: ${data.length}`);
     // if (data.length > 0) {
-      // console.log("Sample heatmap point:", data[0]);
+    // console.log("Sample heatmap point:", data[0]);
     // } else {
-      // console.log("Heatmap data is empty.");
+    // console.log("Heatmap data is empty.");
     // }
     return data;
   } catch (error) {
@@ -148,75 +149,124 @@ async function getHeatmapData(tenantId: string) {
   }
 }
 
-// Helper: Get Top Keywords
-async function getTopKeywords(tenantId: string) {
-  // 1. Fetch last 100 user messages
-  const userMessages = await db
-    .select({ content: messages.content })
+// Helper: Get Sentiment Stats
+async function getSentimentStats(tenantId: string) {
+  const sentiments = await db
+    .select({
+      score: messages.sentimentScore,
+    })
     .from(messages)
-    .where(
-      sql`${messages.tenantId} = ${tenantId} AND ${messages.role} = 'user'`
-    )
-    .orderBy(sql`${messages.createdAt} DESC`)
-    .limit(100)
+    .where(eq(messages.tenantId, tenantId))
     .all();
 
-  // 2. Tokenize and count
-  const stopWords = new Set([
-    "the",
-    "is",
-    "at",
-    "which",
-    "on",
-    "a",
-    "an",
-    "and",
-    "or",
-    "but",
-    "in",
-    "to",
-    "of",
-    "for",
-    "with",
-    "i",
-    "my",
-    "me",
-    "how",
-    "what",
-    "why",
-    "when",
-    "where",
-    "can",
-    "do",
-    "does",
-    "did",
-    "have",
-    "has",
-    "had",
-    "hey",
-    "hello",
-    "hi",
-    "please",
-    "help",
-  ]);
+  let positive = 0;
+  let neutral = 0;
+  let negative = 0;
 
-  const wordCounts: Record<string, number> = {};
-
-  userMessages.forEach((msg) => {
-    const words = msg.content
-      .toLowerCase()
-      .replace(/[^\w\s]/g, "") // Remove punctuation
-      .split(/\s+/);
-
-    words.forEach((w) => {
-      if (w.length > 2 && !stopWords.has(w)) {
-        wordCounts[w] = (wordCounts[w] || 0) + 1;
-      }
-    });
+  sentiments.forEach((s) => {
+    const score = s.score || 0;
+    if (score > 0) positive++;
+    else if (score < 0) negative++;
+    else neutral++;
   });
 
+  const total = sentiments.length || 1;
+
+  return {
+    positive: Math.round((positive / total) * 100),
+    neutral: Math.round((neutral / total) * 100),
+    negative: Math.round((negative / total) * 100),
+  };
+}
+
+// Helper: Get Top Keywords
+async function getTopKeywords(tenantId: string) {
+  // 1. Try to get stored topics first (New system)
+  const storedTopics = await db
+    .select({ topics: messages.topics })
+    .from(messages)
+    .where(
+      sql`${messages.tenantId} = ${tenantId} AND ${messages.topics} IS NOT NULL`
+    )
+    .limit(200)
+    .all();
+
+  const topicCounts: Record<string, number> = {};
+
+  if (storedTopics.length > 0) {
+    storedTopics.forEach((row) => {
+      const topics = row.topics || [];
+      topics.forEach((t) => {
+        const topic = t.toLowerCase();
+        topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+      });
+    });
+  } else {
+    // Fallback: Legacy Keyword Extraction (for old messages)
+    const userMessages = await db
+      .select({ content: messages.content })
+      .from(messages)
+      .where(
+        sql`${messages.tenantId} = ${tenantId} AND ${messages.role} = 'user'`
+      )
+      .orderBy(sql`${messages.createdAt} DESC`)
+      .limit(100)
+      .all();
+
+    const stopWords = new Set([
+      "the",
+      "is",
+      "at",
+      "which",
+      "on",
+      "a",
+      "an",
+      "and",
+      "or",
+      "but",
+      "in",
+      "to",
+      "of",
+      "for",
+      "with",
+      "i",
+      "my",
+      "me",
+      "how",
+      "what",
+      "why",
+      "when",
+      "where",
+      "can",
+      "do",
+      "does",
+      "did",
+      "have",
+      "has",
+      "had",
+      "hey",
+      "hello",
+      "hi",
+      "please",
+      "help",
+    ]);
+
+    userMessages.forEach((msg) => {
+      const words = msg.content
+        .toLowerCase()
+        .replace(/[^\w\s]/g, "")
+        .split(/\s+/);
+
+      words.forEach((w) => {
+        if (w.length > 3 && !stopWords.has(w)) {
+          topicCounts[w] = (topicCounts[w] || 0) + 1;
+        }
+      });
+    });
+  }
+
   // 3. Sort and top 15
-  return Object.entries(wordCounts)
+  return Object.entries(topicCounts)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 15)
     .map(([text, value]) => ({ text, value }));

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -85,6 +85,34 @@ export default function DashboardPage() {
   const [activeFeature, setActiveFeature] = useState("documents");
   const [isManageSourcesOpen, setIsManageSourcesOpen] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
+
+  // Navigation history for browser bar back/forward
+  const navHistory = useRef<string[]>(["documents"]);
+  const navPointer = useRef(0);
+
+  const navigateTo = useCallback((feature: string) => {
+    // If we're not at the end of history, truncate forward entries
+    if (navPointer.current < navHistory.current.length - 1) {
+      navHistory.current = navHistory.current.slice(0, navPointer.current + 1);
+    }
+    navHistory.current.push(feature);
+    navPointer.current = navHistory.current.length - 1;
+    setActiveFeature(feature);
+  }, []);
+
+  const goBack = useCallback(() => {
+    if (navPointer.current > 0) {
+      navPointer.current--;
+      setActiveFeature(navHistory.current[navPointer.current]);
+    }
+  }, []);
+
+  const goForward = useCallback(() => {
+    if (navPointer.current < navHistory.current.length - 1) {
+      navPointer.current++;
+      setActiveFeature(navHistory.current[navPointer.current]);
+    }
+  }, []);
 
   // Customization State
   const [widgetConfig, setWidgetConfig] = useState<any>({});
@@ -396,6 +424,11 @@ export default function DashboardPage() {
       <BrowserBar
         className="glass"
         url={`kiosk.app/dashboard/${activeFeature}`}
+        onBack={goBack}
+        onForward={goForward}
+        onRefresh={() => tenantId && checkData(tenantId)}
+        canGoBack={navPointer.current > 0}
+        canGoForward={navPointer.current < navHistory.current.length - 1}
       />
 
       <div className="scene">
@@ -404,7 +437,7 @@ export default function DashboardPage() {
           <TiltPanel className="h-full w-[260px] rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden">
             <SpatialSidebar
               activeItem={activeFeature}
-              onItemClick={setActiveFeature}
+              onItemClick={navigateTo}
               workspaceName="Kiosk"
               className="h-full w-full p-4"
             />
@@ -422,7 +455,7 @@ export default function DashboardPage() {
                     icon={card.icon}
                     title={card.title}
                     active={activeFeature === card.id}
-                    onClick={() => setActiveFeature(card.id)}
+                    onClick={() => navigateTo(card.id)}
                   />
                 ))}
               </div>
@@ -558,7 +591,7 @@ export default function DashboardPage() {
             <TiltPanel className="flex-[2] w-full rounded-[28px] bg-black/25 backdrop-blur-2xl flex flex-col overflow-hidden p-0 relative">
               <div className="absolute inset-0 bg-white/5 opacity-50 pointer-events-none" />
               <AnimatePresence mode="wait">
-                {activeFeature === "agents" ? (
+                {activeFeature === "agents" || activeFeature === "settings" ? (
                   <motion.div
                     key="preview"
                     initial={{ opacity: 0, rotateY: 90 }}

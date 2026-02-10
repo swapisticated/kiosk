@@ -14,6 +14,7 @@
     "@types/jsdom": "^27.0.0",
     "@types/marked": "^6.0.0",
     "@types/node": "^25.0.9",
+    "@types/sentiment": "^5.0.4",
     "drizzle-kit": "^0.31.8"
   },
   "peerDependencies": {
@@ -43,6 +44,7 @@
     "nanoid": "^5.1.6",
     "openai": "^6.16.0",
     "robots-parser": "^3.0.1",
+    "sentiment": "^5.0.2",
     "unpdf": "^1.4.0",
     "zod": "^4.3.5"
   }

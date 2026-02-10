@@ -79,9 +79,7 @@ export function UsageStats({
       {/* Header */}
       <div className="flex items-center justify-between mb-6 px-1">
         <h3 className="text-sm font-semibold text-white">Impact</h3>
-        <button className="p-1.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors">
-          <ArrowRight size={16} />
-        </button>
+    
       </div>
 
       {/* Progress Ring */}

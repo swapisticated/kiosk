@@ -1,16 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  Users,
-  MessageSquare,
-  Clock,
-  Search,
-  MoreHorizontal,
-  Flame, // For Heatmap
-  Zap,
-} from "lucide-react";
+
 import { useMemo } from "react";
+
+// Custom Chart Components
+import { VolumeChart } from "@/components/charts/VolumeChart";
+import { TopicCloud } from "@/components/charts/TopicCloud";
+import { SentimentGauge } from "@/components/charts/SentimentGauge";
 
 interface InsightsViewProps {
   stats: {
@@ -21,6 +18,7 @@ interface InsightsViewProps {
     activity: any[];
     heatmap?: { day: number; hour: number; count: number }[];
     topKeywords?: { text: string; value: number }[];
+    sentiment?: { positive: number; neutral: number; negative: number };
   } | null;
 }
 
@@ -34,21 +32,11 @@ function formatDuration(seconds: number) {
 export function InsightsView({ stats }: InsightsViewProps) {
   const chartData = useMemo(() => {
     if (!stats?.activity) return [];
-    return stats.activity.map((d: any) => d.count);
+    return stats.activity.map((d: any) => ({
+      date: d.date,
+      count: d.count,
+    }));
   }, [stats]);
-
-  const maxVal = Math.max(...(chartData.length ? chartData : [10]));
-
-  // Create polygon points for SVG (Area Chart)
-  const points = chartData
-    .map((val: number, i: number) => {
-      const x = (i / (chartData.length - 1 || 1)) * 100;
-      const y = 100 - (val / maxVal) * 100;
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  const polygonPath = `0,100 ${points} 100,100`;
 
   // Heatmap Data Processing
   // Create 7x24 grid (Days x Hours)
@@ -78,131 +66,59 @@ export function InsightsView({ stats }: InsightsViewProps) {
             Performance metrics & user intent
           </p>
         </div>
-     
       </div>
 
-      {/* Hero Stats (Compact) */}
-      <div className="grid grid-cols-3 gap-3 shrink-0">
-        <StatCard
-          icon={MessageSquare}
-          label="Total Chats"
-          value={stats?.totalChats || 0}
-          color="bg-blue-500/80"
-          delay={0}
-        />
-        <StatCard
-          icon={Users}
-          label="Total Messages"
-          value={stats?.totalMessages || 0}
-          color="bg-purple-500/80"
-          delay={0.1}
-        />
-        <StatCard
-          icon={Clock}
-          label="Avg. Duration"
-          value={formatDuration(stats?.avgDuration || 0)}
-          color="bg-orange-500/80"
-          delay={0.2}
-        />
-      </div>
+      {/* Quick Stats */}
+      <motion.div
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center gap-6 shrink-0 px-1"
+      >
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+          <span className="text-xs text-white/50">Chats</span>
+          <span className="text-sm font-semibold text-white">
+            {stats?.totalChats || 0}
+          </span>
+        </div>
+        <div className="w-px h-3 bg-white/10" />
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+          <span className="text-xs text-white/50">Messages</span>
+          <span className="text-sm font-semibold text-white">
+            {stats?.totalMessages || 0}
+          </span>
+        </div>
+        <div className="w-px h-3 bg-white/10" />
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+          <span className="text-xs text-white/50">Avg. Duration</span>
+          <span className="text-sm font-semibold text-white">
+            {formatDuration(stats?.avgDuration || 0)}
+          </span>
+        </div>
+      </motion.div>
 
       <div className="flex-1 min-h-0 grid grid-cols-12 gap-4 pb-2">
-        {/* Left Column: Activity Charts (8/12) */}
+        {/* Left Column: Activity & Volume (8/12) */}
         <div className="col-span-8 flex flex-col gap-4 h-full min-h-0">
-          {/* Main Area Chart */}
+          {/* Main Volume Chart */}
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex-[2] rounded-2xl p-2 pl-8 pb-4 relative overflow-hidden flex flex-col min-h-0"
+            className="flex-[2] rounded-2xl p-4 bg-white/[0.02] border border-white/5 relative overflow-hidden flex flex-col min-h-0"
           >
             <div className="flex items-center justify-between mb-2 shrink-0">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                Activity Volume
+                Message Volume
               </h3>
             </div>
-            <div className="flex-1 w-full relative min-h-0 flex flex-col">
-              {stats?.activity && stats.activity.length > 0 ? (
-                <>
-                  <div className="flex-1 relative w-full min-h-0">
-                    <svg
-                      className="w-full h-full overflow-visible"
-                      preserveAspectRatio="none"
-                      viewBox="0 0 100 100"
-                    >
-                      <defs>
-                        <linearGradient
-                          id="chartGradient"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="0%"
-                            stopColor="#818cf8"
-                            stopOpacity="0.5"
-                          />
-                          <stop
-                            offset="100%"
-                            stopColor="#818cf8"
-                            stopOpacity="0"
-                          />
-                        </linearGradient>
-                      </defs>
-                      {[0, 25, 50, 75, 100].map((y) => (
-                        <line
-                          key={y}
-                          x1="0"
-                          y1={y}
-                          x2="100"
-                          y2={y}
-                          stroke="white"
-                          strokeOpacity="0.1"
-                          strokeWidth="0.5"
-                          vectorEffect="non-scaling-stroke"
-                        />
-                      ))}
-                      <polygon
-                        points={polygonPath}
-                        fill="url(#chartGradient)"
-                      />
-                      <polyline
-                        points={points}
-                        fill="none"
-                        stroke="#818cf8"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                    </svg>
-                    <div className="absolute top-0 left-0 h-full flex flex-col justify-between text-[10px] text-stone-500 font-medium -ml-6 py-0 pointer-events-none">
-                      <span>{maxVal}</span>
-                      <span>{Math.round(maxVal / 2)}</span>
-                      <span>0</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between w-full mt-2 px-1 shrink-0">
-                    {stats.activity.map((d: any, i: number) => {
-                      if (stats.activity.length > 5 && i % 2 !== 0)
-                        return <div key={i} className="w-1" />;
-                      return (
-                        <span
-                          key={i}
-                          className="text-[10px] text-stone-500 font-medium"
-                        >
-                          {new Date(d.date).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </>
+            <div className="flex-1 w-full relative min-h-0">
+              {chartData.length > 0 ? (
+                <VolumeChart data={chartData} />
               ) : (
                 <div className="flex items-center justify-center h-full text-stone-500 text-xs">
-                  No data
+                  No activity data yet
                 </div>
               )}
             </div>
@@ -213,12 +129,12 @@ export function InsightsView({ stats }: InsightsViewProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex-[3]  rounded-2xl p-4 flex flex-col min-h-0"
+            className="flex-[3] rounded-2xl p-4  flex flex-col min-h-0"
           >
             <div className="flex-1 flex flex-col justify-between min-h-0 pb-2">
               <div className="flex items-center justify-between mb-2 shrink-0">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                   Hourly Heatmap
+                  Hourly Activity Heatmap
                 </h3>
                 <div className="flex items-center gap-1 text-[9px] text-stone-500">
                   <span>Less</span>
@@ -228,7 +144,7 @@ export function InsightsView({ stats }: InsightsViewProps) {
                   <span>More</span>
                 </div>
               </div>
-              {/* Days Labels and Grid */}
+              {/* Heatmap Grid Implementation */}
               <div className="flex flex-1">
                 {/* Day Labels (Left) */}
                 <div className="flex flex-col justify-between pr-2 text-[10px] text-stone-500 font-medium py-1">
@@ -248,7 +164,7 @@ export function InsightsView({ stats }: InsightsViewProps) {
                       return (
                         <div
                           key={`${dIndex}-${hIndex}`}
-                          className="rounded-[6px] w-full h-full transition-colors"
+                          className="rounded-[2px] w-full h-full transition-colors"
                           style={{
                             backgroundColor:
                               count > 0
@@ -278,85 +194,48 @@ export function InsightsView({ stats }: InsightsViewProps) {
           </motion.div>
         </div>
 
-        {/* Right Column: User Intent (4/12) */}
-        <div className="col-span-4 h-full min-h-0">
+        {/* Right Column: Topics & Sentiment (4/12) */}
+        <div className="col-span-4 flex flex-col gap-4 h-full min-h-0">
+          {/* Sentiment Bars */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="h-full rounded-2xl p-5 flex flex-col min-h-0"
+            className="rounded-2xl p-5 bg-white/[0.02] border border-white/5 flex flex-col shrink-0"
+          >
+            <div className="mb-3 shrink-0">
+              <h3 className="text-sm font-bold text-white mb-1">Sentiment</h3>
+              <p className="text-xs text-stone-500">
+                Overall mood of conversations
+              </p>
+            </div>
+            <SentimentGauge
+              positive={stats?.sentiment?.positive || 0}
+              neutral={stats?.sentiment?.neutral || 100}
+              negative={stats?.sentiment?.negative || 0}
+            />
+          </motion.div>
+
+          {/* Topics Cloud */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex-1 rounded-2xl p-5 bg-white/[0.02] border border-white/5 flex flex-col min-h-0 overflow-hidden"
           >
             <div className="mb-4 shrink-0">
-              <h3 className="text-sm font-bold text-white mb-1">User Intent</h3>
+              <h3 className="text-sm font-bold text-white mb-1">Top Topics</h3>
               <p className="text-xs text-stone-500">
-                Top keywords from recent chats
+                Extracted keywords from user queries
               </p>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-              <div className="flex flex-wrap gap-2 content-start">
-                {stats?.topKeywords?.map((kw, i) => (
-                  <span
-                    key={i}
-                    className="px-2.5 py-1 rounded-md text-xs font-medium border border-white/5 transition-all hover:bg-white/5 cursor-default"
-                    style={{
-                      backgroundColor: `rgba(255, 255, 255, ${
-                        0.03 +
-                        (kw.value / (stats.topKeywords?.[0]?.value || 1)) * 0.1
-                      })`,
-                      fontSize: `${Math.max(
-                        0.7,
-                        0.7 +
-                          (kw.value / (stats.topKeywords?.[0]?.value || 1)) *
-                            0.5
-                      )}rem`,
-                      opacity:
-                        0.6 +
-                        (kw.value / (stats.topKeywords?.[0]?.value || 1)) * 0.4,
-                    }}
-                  >
-                    {kw.text}
-                    <span className="ml-1.5 opacity-40 text-[9px]">
-                      {kw.value}
-                    </span>
-                  </span>
-                ))}
-                {(!stats?.topKeywords || stats.topKeywords.length === 0) && (
-                  <div className="text-stone-600 text-xs italic">
-                    No keywords yet
-                  </div>
-                )}
-              </div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <TopicCloud topics={stats?.topKeywords || []} />
             </div>
           </motion.div>
         </div>
       </div>
     </div>
-  );
-}
-
-// Compact Stat Card Component
-function StatCard({ icon: Icon, label, value, color, delay }: any) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-xl p-3 flex items-center gap-3 overflow-hidden"
-    >
-      <div
-        className={`w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-lg shrink-0 ${color}`}
-      >
-        <Icon size={16} />
-      </div>
-      <div className="flex flex-col min-w-0">
-        <span className="text-[10px] text-stone-400 font-medium uppercase tracking-wider truncate">
-          {label}
-        </span>
-        <span className="text-lg font-bold text-white truncate leading-tight">
-          {value}
-        </span>
-      </div>
-    </motion.div>
   );
 }
