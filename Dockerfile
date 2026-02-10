@@ -25,7 +25,7 @@ RUN cd /tmp/prod && bun install --frozen-lockfile --production
 # copy node_modules from temp directory
 # then copy all (non-ignored) project files into the image
 FROM base AS prerelease
-COPY --from=install /temp/dev/node_modules node_modules
+COPY --from=install /tmp/dev/node_modules node_modules
 COPY . .
 
 # build the widget
@@ -34,7 +34,7 @@ RUN bun run build:widget
 
 # copy production dependencies and source code into final image
 FROM base AS release
-COPY --from=install /temp/prod/node_modules node_modules
+COPY --from=install /tmp/prod/node_modules node_modules
 COPY --from=prerelease /app/src src
 COPY --from=prerelease /app/dist dist
 COPY --from=prerelease /app/package.json .
