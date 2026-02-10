@@ -32,6 +32,7 @@ USER root
 RUN mkdir -p dist && chown -R bun:bun dist
 USER bun
 
+ARG API_URL
 RUN bun run build:widget
 
 # copy production dependencies and source code into final image

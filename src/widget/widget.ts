@@ -22,6 +22,7 @@ declare global {
     KioskSettings?: KioskConfig;
     KioskWidget?: { init: (config: KioskConfig) => Promise<KioskChatWidget> };
   }
+  var __API_URL__: string;
 }
 
 const DEFAULTS: Partial<KioskConfig> = {
@@ -31,7 +32,7 @@ const DEFAULTS: Partial<KioskConfig> = {
   botName: "Assistant",
   welcomeMessage: "Hello! How can I help you today?",
   placeholderText: "Type a message...",
-  apiUrl: "http://localhost:8000",
+  apiUrl: __API_URL__,
 };
 class KioskChatWidget {
   private config: KioskConfig;

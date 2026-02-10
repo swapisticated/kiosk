@@ -10,16 +10,18 @@ export default function EmbedPage() {
     setTenantId(localStorage.getItem("tenantId"));
   }, []);
 
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
   const embedCodeHTML = tenantId
     ? `<!-- Kiosk AI Chatbot -->
 <script>
 (function(){
   window.KioskSettings = { 
     tenantId: "${tenantId}",
-    apiUrl: "http://localhost:8000"
+    apiUrl: "${apiUrl}"
   };
   var w = document.createElement("script");
-  w.src = "http://localhost:8000/widget.js";
+  w.src = "${apiUrl}/widget.js";
   w.async = true;
   document.head.appendChild(w);
 })();
@@ -32,10 +34,10 @@ export default function EmbedPage() {
     (function(){
       window.KioskSettings = { 
         tenantId: "${tenantId}",
-        apiUrl: "http://localhost:8000"
+        apiUrl: "${apiUrl}"
       };
       var w = document.createElement("script");
-      w.src = "http://localhost:8000/widget.js";
+      w.src = "${apiUrl}/widget.js";
       w.async = true;
       document.head.appendChild(w);
     })();
