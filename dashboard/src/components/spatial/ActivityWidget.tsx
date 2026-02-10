@@ -60,11 +60,13 @@ export function ActivityWidget({
       <h4 className="text-sm font-semibold text-white mb-4">Uploads</h4>
 
       {/* Activity List via MultiStepLoader Core */}
-      <div className="flex flex-col gap-3 min-h-[100px]">
+      <div className="flex flex-col gap-3 h-40">
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-white/20 gap-2">
-            <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
+          <div className="flex flex-col items-center justify-between h-full text-white/20">
+            <div className="flex-1 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
+              </div>
             </div>
             <span className="text-sm font-medium tracking-wide">
               SYSTEM IDLE

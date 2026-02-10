@@ -3,6 +3,13 @@
 FROM oven/bun:1 AS base
 WORKDIR /app
 
+USER root
+RUN apt-get update \\
+  && apt-get install -y procps \\
+  && rm -rf /var/lib/apt/lists/*
+
+USER bun
+
 # install dependencies into temp directory
 # this will cache them and speed up future builds
 FROM base AS install
