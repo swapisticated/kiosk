@@ -91,6 +91,30 @@ export async function ingestUrl(
   return res.json();
 }
 
+// Upload a file
+export async function uploadFile(
+  apiKey: string,
+  file: File
+): Promise<IngestResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE}/documents/upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || "Failed to upload file");
+  }
+
+  return res.json();
+}
+
 // Lookup tenant by email
 export async function lookupTenant(email: string): Promise<Tenant | null> {
   const res = await fetch(

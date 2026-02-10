@@ -323,6 +323,30 @@ export default function DashboardPage() {
     }
   };
 
+  const handleFileUpload = async (file: File) => {
+    if (!tenantId) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`${API_URL}/documents/upload`, {
+        method: "POST",
+        headers: {
+          "x-dashboard-secret": process.env.NEXT_PUBLIC_DASHBOARD_SECRET || "",
+          "x-tenant-id": tenantId,
+        },
+        body: formData,
+      });
+
+      if (res.ok) {
+        checkData(tenantId);
+      }
+    } catch (err) {
+      console.error("File upload failed:", err);
+    }
+  };
+
   const handleUpdateConfig = (key: string, value: any) => {
     setWidgetConfig((prev: any) => ({ ...prev, [key]: value }));
   };
@@ -589,6 +613,7 @@ export default function DashboardPage() {
         }))}
         onAddSource={handleAddSource}
         onDeleteSource={handleDeleteSource}
+        onFileUpload={handleFileUpload}
       />
     </div>
   );

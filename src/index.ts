@@ -38,4 +38,5 @@ app.route("/conversations", conversationsRoute);
 export default {
   port: 8000,
   fetch: app.fetch,
+  idleTimeout: 60, // Increase timeout for long-running operations like file uploads
 };

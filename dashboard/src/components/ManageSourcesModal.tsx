@@ -19,6 +19,7 @@ interface ManageSourcesModalProps {
   sources: Source[];
   onAddSource: (url: string) => Promise<void>;
   onDeleteSource: (id: string) => Promise<void>;
+  onFileUpload: (file: File) => Promise<void>;
 }
 
 export function ManageSourcesModal({
@@ -27,6 +28,7 @@ export function ManageSourcesModal({
   sources,
   onAddSource,
   onDeleteSource,
+  onFileUpload,
 }: ManageSourcesModalProps) {
   const [newUrl, setNewUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -87,7 +89,7 @@ export function ManageSourcesModal({
 
               {/* Body */}
               <div className="p-6 flex-1 overflow-y-auto space-y-6">
-                {/* Add Source Form */}
+                {/* Add URL Form */}
                 <form onSubmit={handleSubmit} className="flex gap-3">
                   <div className="flex-1 relative">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">
@@ -117,6 +119,38 @@ export function ManageSourcesModal({
                     )}
                   </button>
                 </form>
+
+                {/* File Upload */}
+                <div>
+                  <input
+                    type="file"
+                    id="file-upload"
+                    accept=".pdf,.txt,.md"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      setLoading(true);
+                      try {
+                        await onFileUpload(file);
+                        // Reset input
+                        e.target.value = "";
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-black/20 border border-dashed border-white/10 rounded-xl text-sm text-stone-400 hover:border-white/20 hover:text-white transition-all cursor-pointer"
+                  >
+                    <FileText size={16} />
+                    Upload PDF or TXT
+                  </label>
+                </div>
 
                 {/* Sources List */}
                 <div className="space-y-3">

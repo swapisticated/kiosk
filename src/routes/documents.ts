@@ -10,6 +10,7 @@ import { eq, and } from "drizzle-orm";
 import { processIngestion } from "../services/ingestion";
 import { progressEmitter } from "../services/progressEmitter";
 import { deleteVectors } from "../services/rag/pinecone";
+import { extractTextFromFile } from "../utils/fileParser";
 
 const documentsRoute = new Hono();
 
@@ -28,6 +29,72 @@ const createdocumentSchema = z.object({
 
 //================================================
 
+// File upload endpoint
+documentsRoute.post("/upload", authMiddleware, async (c) => {
+  try {
+    const tenantId = c.get("tenantId");
+    const formData = await c.req.formData();
+    const file = formData.get("file") as File;
+
+    if (!file) {
+      return c.json({ error: "No file provided" }, 400);
+    }
+
+    console.log(`[Documents] Received file upload: ${file.name}`);
+
+    // Read file buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Extract text
+    const content = await extractTextFromFile(buffer, file.name);
+
+    if (!content || content.length < 10) {
+      return c.json({ error: "File appears to be empty" }, 400);
+    }
+
+    // Create document record
+    const [doc] = await db
+      .insert(documents)
+      .values({
+        id: nanoid(),
+        tenantId,
+        sourceType: "uploaded",
+        fileName: file.name,
+        title: file.name,
+        content,
+        status: "pending",
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    if (!doc) {
+      return c.json({ error: "Failed to create document" }, 500);
+    }
+
+    // Process in background (chunk, embed, store)
+    processIngestion(doc.id, "", tenantId, content).catch((err) => {
+      console.error("[Documents] File ingestion failed:", err);
+    });
+
+    return c.json(
+      {
+        message: "File upload started",
+        documentId: doc.id,
+        status: "pending",
+      },
+      202
+    );
+  } catch (error) {
+    console.error("File upload error:", error);
+    return c.json(
+      { error: error instanceof Error ? error.message : "Upload failed" },
+      500
+    );
+  }
+});
+
+// URL ingestion endpoint
 documentsRoute.post(
   "/",
   authMiddleware,

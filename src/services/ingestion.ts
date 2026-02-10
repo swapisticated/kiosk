@@ -15,7 +15,8 @@ import { progressEmitter } from "./progressEmitter";
 export async function processIngestion(
   rootDocumentId: string,
   url: string,
-  tenantId: string
+  tenantId: string,
+  preloadedContent?: string
 ): Promise<void> {
   console.log(`[Ingestion] Starting background job for doc: ${rootDocumentId}`);
 
@@ -50,13 +51,48 @@ export async function processIngestion(
     .where(eq(documents.id, rootDocumentId));
 
   try {
-    // 2. Crawl the website
-    emit("crawling", 10, "Discovering pages...");
-    const pages = await crawl(url, 10);
-    console.log(`[Ingestion] Crawl finished. Found ${pages.length} pages.`);
-    emit("crawl_complete", 30, `Found ${pages.length} pages`, {
-      pagesFound: pages.length,
-    });
+    let pages: { url: string; content: string; chunks: any[] }[];
+
+    // If preloaded content (file upload), skip crawling
+    if (preloadedContent) {
+      emit("processing", 30, "Processing uploaded file...");
+
+      // Import chunking logic
+      const { RecursiveCharacterTextSplitter } = await import(
+        "@langchain/textsplitters"
+      );
+
+      const splitter = new RecursiveCharacterTextSplitter({
+        chunkSize: 1000,
+        chunkOverlap: 200,
+      });
+
+      const chunks = await splitter.splitText(preloadedContent);
+      const doc = await db
+        .select()
+        .from(documents)
+        .where(eq(documents.id, rootDocumentId))
+        .get();
+
+      pages = [
+        {
+          url: "",
+          content: preloadedContent,
+          chunks: chunks.map((content) => ({
+            content,
+            metadata: { page_title: doc?.title || "Uploaded File" },
+          })),
+        },
+      ];
+    } else {
+      // Normal URL crawling
+      emit("crawling", 10, "Discovering pages...");
+      pages = await crawl(url, 10);
+      console.log(`[Ingestion] Crawl finished. Found ${pages.length} pages.`);
+      emit("crawl_complete", 30, `Found ${pages.length} pages`, {
+        pagesFound: pages.length,
+      });
+    }
 
     let totalChunks = 0;
     const totalPages = pages.length;
